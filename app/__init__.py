@@ -58,8 +58,8 @@ def create_app(config_class=Config):
         db.session.rollback()
         return render_template('errors/500.html'), 500
 
-    # Auto-initialize DB tables & seed Excel data if first run (non-testing)
-    if not app.config.get('TESTING'):
+    # Auto-initialize DB tables & seed Excel data if first run (non-testing and non-serverless)
+    if not app.config.get('TESTING') and not os.environ.get('VERCEL'):
         with app.app_context():
             try:
                 db.create_all()
