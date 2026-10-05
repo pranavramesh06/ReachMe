@@ -1,85 +1,84 @@
 {% extends 'base.html' %}
 
-{% block title %}Patient Dashboard - ReachMe{% endblock %}
+{% block title %}Patient Portal — ReachMe{% endblock %}
 
 {% block content %}
-<section class="py-10">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<section class="py-10 sm:py-14">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
         
-        <!-- Welcome Banner -->
-        <div class="glass-panel p-8 rounded-2xl border border-slate-700/80 mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <!-- Welcome Header -->
+        <div class="clean-card rounded-2xl p-6 sm:p-8 mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
-                <span class="inline-block text-xs font-bold px-3 py-1 rounded-full bg-teal-500/10 text-teal-300 border border-teal-500/20 mb-2 font-heading uppercase">
-                    PATIENT ACCOUNT
+                <span class="inline-block text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 mb-2">
+                    Patient Portal
                 </span>
-                <h1 class="text-3xl font-extrabold text-white font-heading">Good day, {{ user.full_name }}!</h1>
-                <p class="text-xs text-slate-400 mt-1">Manage your active medicine orders, doctor consultations, and triage assessments</p>
+                <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Welcome, {{ user.full_name }}</h1>
+                <p class="text-xs text-slate-500 mt-1">Review appointments, active orders, and clinical triage evaluations.</p>
             </div>
             
-            <div class="flex flex-wrap gap-3">
-                <a href="{{ url_for('intelligence.triage') }}" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-teal-600 hover:bg-teal-500 transition flex items-center gap-2">
-                    <i class="fa-solid fa-brain"></i> Start Triage
+            <div class="flex flex-wrap gap-2 text-xs">
+                <a href="{{ url_for('intelligence.triage') }}" class="px-3.5 py-2 rounded-xl font-semibold text-white bg-teal-600 hover:bg-teal-700 transition shadow-sm flex items-center gap-1.5">
+                    <i class="fa-solid fa-brain text-[11px]"></i> New Triage
                 </a>
-                <a href="{{ url_for('consultation.consult') }}" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 transition flex items-center gap-2">
-                    <i class="fa-solid fa-calendar-check text-teal-400"></i> Book Appointment
+                <a href="{{ url_for('consultation.consult') }}" class="px-3.5 py-2 rounded-xl font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition shadow-sm">
+                    Book Doctor
                 </a>
-                <a href="{{ url_for('medicine.order_meds') }}" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 transition flex items-center gap-2">
-                    <i class="fa-solid fa-cart-plus text-teal-400"></i> Order Medicines
+                <a href="{{ url_for('medicine.order_meds') }}" class="px-3.5 py-2 rounded-xl font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition shadow-sm">
+                    Order Meds
                 </a>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <!-- Left Column: Appointments & Orders -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Left Side: Appointments & Orders -->
             <div class="lg:col-span-8 space-y-8">
                 
-                <!-- Appointments Table -->
-                <div class="glass-card rounded-2xl p-6 border border-slate-800">
-                    <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-lg font-bold text-white font-heading flex items-center gap-2">
-                            <i class="fa-solid fa-user-doctor text-teal-400"></i> My Doctor Consultations
-                        </h2>
-                        <a href="{{ url_for('consultation.consult') }}" class="text-xs text-teal-400 hover:text-teal-300 font-semibold">Book New</a>
+                <!-- Appointments -->
+                <div class="clean-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                        <h2 class="text-sm font-bold text-slate-900">Consultation Bookings</h2>
+                        <a href="{{ url_for('consultation.consult') }}" class="text-xs text-teal-700 font-semibold hover:underline">+ New booking</a>
                     </div>
 
                     {% if appointments %}
                         <div class="overflow-x-auto">
-                            <table class="w-full text-xs text-left text-slate-300">
-                                <thead class="text-[11px] uppercase bg-slate-900/80 text-slate-400 font-heading">
+                            <table class="w-full text-xs text-left">
+                                <thead class="text-[11px] text-slate-400 font-medium border-b border-slate-100">
                                     <tr>
-                                        <th class="p-3">Doctor</th>
-                                        <th class="p-3">Date & Slot</th>
-                                        <th class="p-3">Problem</th>
-                                        <th class="p-3">Status</th>
-                                        <th class="p-3 text-right">Action</th>
+                                        <th class="pb-2.5 font-medium">Doctor</th>
+                                        <th class="pb-2.5 font-medium">Date & Slot</th>
+                                        <th class="pb-2.5 font-medium">Problem</th>
+                                        <th class="pb-2.5 font-medium">Status</th>
+                                        <th class="pb-2.5 text-right font-medium">Action</th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-slate-800">
+                                <tbody class="divide-y divide-slate-100 text-slate-700">
                                     {% for app in appointments %}
-                                        <tr class="hover:bg-slate-800/40">
-                                            <td class="p-3 font-semibold text-white">
+                                        <tr>
+                                            <td class="py-3 font-semibold text-slate-900">
                                                 {{ app.doctor_name }}
-                                                <span class="block text-[10px] font-normal text-slate-400">{{ app.doctor_specialty }}</span>
+                                                <span class="block text-[10px] text-slate-400 font-normal">{{ app.doctor_specialty }}</span>
                                             </td>
-                                            <td class="p-3 font-mono text-slate-300">{{ app.appointment_date }} @ {{ app.time_slot }}</td>
-                                            <td class="p-3 truncate max-w-[150px]">{{ app.problem_description }}</td>
-                                            <td class="p-3">
-                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold 
-                                                    {% if app.status == 'CONFIRMED' %} bg-teal-500/20 text-teal-300 border border-teal-500/30
-                                                    {% elif app.status == 'COMPLETED' %} bg-emerald-500/20 text-emerald-300 border border-emerald-500/30
-                                                    {% else %} bg-rose-500/20 text-rose-300 border border-rose-500/30 {% endif %}">
+                                            <td class="py-3 font-mono text-slate-600">{{ app.appointment_date }} @ {{ app.time_slot }}</td>
+                                            <td class="py-3 max-w-[140px] truncate text-slate-500">{{ app.problem_description }}</td>
+                                            <td class="py-3">
+                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold 
+                                                    {% if app.status == 'CONFIRMED' %} bg-teal-50 text-teal-700 border border-teal-200
+                                                    {% elif app.status == 'COMPLETED' %} bg-slate-100 text-slate-700
+                                                    {% else %} bg-rose-50 text-rose-700 border border-rose-200 {% endif %}">
                                                     {{ app.status }}
                                                 </span>
                                             </td>
-                                            <td class="p-3 text-right">
+                                            <td class="py-3 text-right">
                                                 {% if app.status == 'CONFIRMED' %}
                                                     <form action="{{ url_for('consultation.cancel_appointment', app_id=app.id) }}" method="POST" class="inline">
-                                                        <button type="submit" onclick="return confirm('Cancel this appointment?')" class="text-rose-400 hover:text-rose-300 font-semibold text-[11px]">
+                                                        <button type="submit" onclick="return confirm('Cancel this appointment?')" class="text-rose-600 hover:underline text-[11px] font-medium">
                                                             Cancel
                                                         </button>
                                                     </form>
                                                 {% else %}
-                                                    <span class="text-slate-500">-</span>
+                                                    <span class="text-slate-300">-</span>
                                                 {% endif %}
                                             </td>
                                         </tr>
@@ -88,103 +87,86 @@
                             </table>
                         </div>
                     {% else %}
-                        <div class="text-center py-8 text-slate-400 text-xs">
-                            No consultation records found. <a href="{{ url_for('consultation.consult') }}" class="text-teal-400 underline">Book your first doctor appointment.</a>
-                        </div>
+                        <p class="text-xs text-slate-400 py-4 text-center">No consultation bookings recorded.</p>
                     {% endif %}
                 </div>
 
-                <!-- Medicine Orders -->
-                <div class="glass-card rounded-2xl p-6 border border-slate-800">
-                    <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-lg font-bold text-white font-heading flex items-center gap-2">
-                            <i class="fa-solid fa-box text-sky-400"></i> Active Medicine Orders
-                        </h2>
-                        <a href="{{ url_for('medicine.order_meds') }}" class="text-xs text-sky-400 hover:text-sky-300 font-semibold">Order Meds</a>
+                <!-- Orders -->
+                <div class="clean-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                        <h2 class="text-sm font-bold text-slate-900">Pharmacy Orders</h2>
+                        <a href="{{ url_for('medicine.order_meds') }}" class="text-xs text-teal-700 font-semibold hover:underline">+ New order</a>
                     </div>
 
                     {% if orders %}
-                        <div class="space-y-4">
+                        <div class="space-y-3">
                             {% for order in orders %}
-                                <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
                                     <div>
-                                        <div class="flex items-center gap-3">
-                                            <span class="text-sm font-bold text-white font-heading">Order #{{ order.id }}</span>
-                                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <span class="font-bold text-slate-900 font-mono">#{{ order.id }}</span>
+                                            <span class="text-[10px] px-2 py-0.5 rounded bg-white border border-slate-200 font-medium text-slate-600">
                                                 {{ order.status }}
                                             </span>
                                         </div>
-                                        <p class="text-xs text-slate-400 mt-1">
-                                            Delivery Address: {{ order.shipping_address }}
-                                        </p>
-                                        <span class="text-[11px] text-slate-500 block mt-0.5">Placed on {{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                                        <span class="text-[11px] text-slate-500 block">{{ order.shipping_address }}</span>
                                     </div>
-                                    <div class="text-right">
-                                        <span class="text-base font-bold text-teal-400 font-heading">₹{{ order.total_amount|int }}</span>
-                                    </div>
+                                    <span class="font-bold text-slate-900 font-mono text-sm">₹{{ order.total_amount|int }}</span>
                                 </div>
                             {% endfor %}
                         </div>
                     {% else %}
-                        <div class="text-center py-8 text-slate-400 text-xs">
-                            No medicine orders placed yet. <a href="{{ url_for('medicine.order_meds') }}" class="text-sky-400 underline">Order medicines online.</a>
-                        </div>
+                        <p class="text-xs text-slate-400 py-4 text-center">No medicine orders placed yet.</p>
                     {% endif %}
                 </div>
 
             </div>
 
-            <!-- Right Column: Recent Triage & Prescriptions Vault -->
-            <div class="lg:col-span-4 space-y-8">
+            <!-- Right Side: Triage & Prescriptions -->
+            <div class="lg:col-span-4 space-y-6">
                 
-                <!-- Triage History Widget -->
-                <div class="glass-card rounded-2xl p-6 border border-slate-800">
-                    <h2 class="text-base font-bold text-white font-heading mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-brain text-teal-400"></i> Recent Triage Results
-                    </h2>
+                <!-- Triage Summary -->
+                <div class="clean-card rounded-2xl p-5">
+                    <span class="text-xs font-bold text-slate-900 block mb-3">Triage Assessments</span>
                     {% if triage_history %}
-                        <div class="space-y-3">
+                        <div class="space-y-2">
                             {% for t in triage_history %}
-                                <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs">
-                                    <div class="flex items-center justify-between mb-1">
-                                        <span class="font-bold text-white font-heading">{{ t.recommended_specialization }}</span>
-                                        <span class="font-mono text-teal-300 text-[11px]">Risk: {{ t.risk_score }}%</span>
+                                <div class="p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs">
+                                    <div class="flex justify-between items-center mb-0.5">
+                                        <span class="font-bold text-slate-900">{{ t.recommended_specialization }}</span>
+                                        <span class="text-[11px] font-mono text-teal-700 font-semibold">{{ t.risk_score }}%</span>
                                     </div>
-                                    <p class="text-[11px] text-slate-400 truncate">{{ t.symptoms_input }}</p>
+                                    <p class="text-[11px] text-slate-500 truncate">{{ t.symptoms_input }}</p>
                                 </div>
                             {% endfor %}
                         </div>
                     {% else %}
-                        <p class="text-xs text-slate-400">No triage assessments recorded.</p>
+                        <p class="text-[11px] text-slate-400">No triage history recorded.</p>
                     {% endif %}
                 </div>
 
                 <!-- Prescription Vault -->
-                <div class="glass-card rounded-2xl p-6 border border-slate-800">
-                    <h2 class="text-base font-bold text-white font-heading mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-file-prescription text-amber-400"></i> Prescription Vault
-                    </h2>
+                <div class="clean-card rounded-2xl p-5">
+                    <span class="text-xs font-bold text-slate-900 block mb-3">Uploaded Prescriptions</span>
                     {% if prescriptions %}
-                        <div class="space-y-3">
+                        <div class="space-y-2">
                             {% for p in prescriptions %}
-                                <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs flex items-center justify-between">
-                                    <div>
-                                        <span class="font-semibold text-white block truncate max-w-[150px]">{{ p.filename }}</span>
-                                        <span class="text-[10px] text-slate-400">{{ p.uploaded_at.strftime('%Y-%m-%d') }}</span>
-                                    </div>
-                                    <a href="{{ p.file_path }}" target="_blank" class="text-xs text-teal-400 hover:underline">View File</a>
+                                <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs flex justify-between items-center">
+                                    <span class="text-[11px] text-slate-700 truncate max-w-[140px]">{{ p.filename }}</span>
+                                    <a href="{{ p.file_path }}" target="_blank" class="text-[11px] text-teal-700 hover:underline font-medium">View</a>
                                 </div>
                             {% endfor %}
                         </div>
                     {% else %}
-                        <p class="text-xs text-slate-400">No uploaded prescriptions.</p>
+                        <p class="text-[11px] text-slate-400 mb-3">No prescriptions uploaded.</p>
                     {% endif %}
-                    <a href="{{ url_for('prescription.upload_page') }}" class="block text-center w-full py-2 mt-4 rounded-xl text-xs font-semibold text-teal-300 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 transition">
-                        Upload Prescription PDF/JPG
+                    <a href="{{ url_for('prescription.upload_page') }}" class="block text-center w-full py-2 mt-3 rounded-xl text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition shadow-sm">
+                        Upload Slip
                     </a>
                 </div>
 
             </div>
+
         </div>
 
     </div>
