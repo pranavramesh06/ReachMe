@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ReachMe - Data-Driven Telemedicine & Healthcare Platform{% endblock %}</title>
+    <meta name="description" content="ReachMe - Smart, database-driven telemedicine platform providing online doctor consultations, medicine delivery, prescription OCR, and intelligent triage recommendation.">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        teal: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        },
+                        emerald: {
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- FontAwesome & Flowbite -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.css" rel="stylesheet" />
+    
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        h1, h2, h3, h4, .font-heading {
+            font-family: 'Outfit', sans-serif;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #2dd4bf 0%, #38bdf8 50%, #818cf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #0f766e 0%, #0284c7 100%);
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="flex flex-col min-h-screen bg-slate-900 text-slate-100 antialiased selection:bg-teal-500 selection:text-white">
+
+    <!-- Navigation Header -->
+    <header class="sticky top-0 z-50 glass-panel border-b border-slate-800/80">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <!-- Logo -->
+                <div class="flex items-center gap-3">
+                    <a href="/" class="flex items-center gap-3 group">
+                        <div class="w-11 h-11 rounded-xl gradient-bg flex items-center justify-center shadow-lg shadow-teal-500/20 group-hover:scale-105 transition-transform duration-300">
+                            <i class="fa-solid fa-heart-pulse text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <span class="text-2xl font-bold font-heading tracking-tight text-white group-hover:text-teal-400 transition-colors">Reach<span class="text-teal-400">Me</span></span>
+                            <span class="block text-[10px] uppercase font-semibold tracking-wider text-teal-400/80 -mt-1">Healthcare Intelligence</span>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Navigation Links -->
+                <div class="hidden md:flex items-center gap-1 lg:gap-2">
+                    <a href="/" class="px-3.5 py-2 rounded-lg text-sm font-medium transition-colors hover:text-teal-400 hover:bg-slate-800/50">Home</a>
+                    <a href="{{ url_for('intelligence.triage') }}" class="px-3.5 py-2 rounded-lg text-sm font-semibold text-teal-300 hover:text-white hover:bg-teal-900/40 transition-colors flex items-center gap-1.5 border border-teal-500/30">
+                        <i class="fa-solid fa-brain text-teal-400"></i> Smart Triage
+                    </a>
+                    <a href="{{ url_for('medicine.order_meds') }}" class="px-3.5 py-2 rounded-lg text-sm font-medium transition-colors hover:text-teal-400 hover:bg-slate-800/50">Order Meds</a>
+                    <a href="{{ url_for('consultation.consult') }}" class="px-3.5 py-2 rounded-lg text-sm font-medium transition-colors hover:text-teal-400 hover:bg-slate-800/50">Consult Doctor</a>
+                    <a href="{{ url_for('prescription.upload_page') }}" class="px-3.5 py-2 rounded-lg text-sm font-medium transition-colors hover:text-teal-400 hover:bg-slate-800/50">Prescription OCR</a>
+                    <a href="{{ url_for('ambulance.call_ambulance') }}" class="px-3.5 py-2 rounded-lg text-sm font-semibold text-red-400 hover:text-red-300 hover:bg-red-950/40 transition-colors flex items-center gap-1.5 border border-red-500/20">
+                        <i class="fa-solid fa-truck-medical"></i> Emergency
+                    </a>
+                </div>
+
+                <!-- Right Side User Menu / Actions -->
+                <div class="flex items-center gap-3">
+                    {% if current_user %}
+                        <div class="relative flex items-center gap-3">
+                            <span class="hidden sm:inline-block text-xs font-semibold px-2.5 py-1 rounded-full border border-teal-500/30 bg-teal-500/10 text-teal-300">
+                                {{ current_user.role }}
+                            </span>
+                            
+                            {% if current_user.role == 'ADMIN' %}
+                                <a href="{{ url_for('admin.dashboard') }}" class="text-xs font-medium bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-lg border border-slate-700 transition">
+                                    <i class="fa-solid fa-chart-line text-teal-400 mr-1"></i> Admin Panel
+                                </a>
+                            {% elif current_user.role == 'DOCTOR' %}
+                                <a href="{{ url_for('doctor.dashboard') }}" class="text-xs font-medium bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-lg border border-slate-700 transition">
+                                    <i class="fa-solid fa-user-doctor text-teal-400 mr-1"></i> Doctor Panel
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('patient.dashboard') }}" class="text-xs font-medium bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-lg border border-slate-700 transition">
+                                    <i class="fa-solid fa-table-cells text-teal-400 mr-1"></i> Dashboard
+                                </a>
+                            {% endif %}
+
+                            <a href="{{ url_for('auth.logout') }}" class="p-2 text-slate-400 hover:text-white transition" title="Log Out">
+                                <i class="fa-solid fa-right-from-bracket"></i>
+                            </a>
+                        </div>
+                    {% else %}
+                        <a href="{{ url_for('auth.login') }}" class="text-sm font-medium text-slate-300 hover:text-white px-3 py-2 transition">
+                            Log In
+                        </a>
+                        <a href="{{ url_for('auth.register') }}" class="text-sm font-semibold bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white px-4 py-2 rounded-xl shadow-md shadow-teal-500/20 transition duration-200">
+                            Get Started
+                        </a>
+                    {% endif %}
+
+                    <!-- Mobile Menu Button -->
+                    <button data-collapse-toggle="mobile-menu" type="button" class="md:hidden p-2 text-slate-400 hover:text-white rounded-lg focus:outline-none">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Menu -->
+            <div class="hidden md:hidden pb-6 border-t border-slate-800 pt-4" id="mobile-menu">
+                <div class="flex flex-col gap-2">
+                    <a href="/" class="px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg">Home</a>
+                    <a href="{{ url_for('intelligence.triage') }}" class="px-4 py-2 text-teal-300 hover:text-white hover:bg-slate-800 rounded-lg"><i class="fa-solid fa-brain mr-2"></i>Smart Healthcare Triage</a>
+                    <a href="{{ url_for('medicine.order_meds') }}" class="px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg">Order Meds</a>
+                    <a href="{{ url_for('consultation.consult') }}" class="px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg">Consult Doctor</a>
+                    <a href="{{ url_for('prescription.upload_page') }}" class="px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg">Prescription OCR</a>
+                    <a href="{{ url_for('ambulance.call_ambulance') }}" class="px-4 py-2 text-red-400 hover:text-red-300 hover:bg-slate-800 rounded-lg"><i class="fa-solid fa-truck-medical mr-2"></i>Call Ambulance</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Flash Alert Messages -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-3 p-4 rounded-xl flex items-center justify-between shadow-lg backdrop-blur-md border 
+                        {% if category == 'success' %} bg-emerald-950/80 border-emerald-500/40 text-emerald-200
+                        {% elif category == 'danger' %} bg-rose-950/80 border-rose-500/40 text-rose-200
+                        {% elif category == 'warning' %} bg-amber-950/80 border-amber-500/40 text-amber-200
+                        {% else %} bg-sky-950/80 border-sky-500/40 text-sky-200 {% endif %}">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid 
+                                {% if category == 'success' %} fa-circle-check text-emerald-400
+                                {% elif category == 'danger' %} fa-triangle-exclamation text-rose-400
+                                {% elif category == 'warning' %} fa-circle-exclamation text-amber-400
+                                {% else %} fa-circle-info text-sky-400 {% endif %} text-lg"></i>
+                            <span class="text-sm font-medium">{{ message }}</span>
+                        </div>
+                        <button type="button" onclick="this.parentElement.remove()" class="text-slate-400 hover:text-white">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main Body Content -->
+    <main class="flex-grow">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-950 border-t border-slate-800/80 text-slate-400 mt-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+                <div class="md:col-span-1">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center">
+                            <i class="fa-solid fa-heart-pulse text-white text-sm"></i>
+                        </div>
+                        <span class="text-xl font-bold font-heading text-white">Reach<span class="text-teal-400">Me</span></span>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed mb-4">
+                        Empowering patients with data-driven telemedicine, online pharmacy, smart triage decision support, and emergency dispatch tracking.
+                    </p>
+                    <div class="flex items-center gap-3 text-slate-400 text-sm">
+                        <span class="px-2 py-0.5 rounded text-[11px] bg-slate-800 border border-slate-700 text-teal-300 font-mono">Neon PostgreSQL</span>
+                        <span class="px-2 py-0.5 rounded text-[11px] bg-slate-800 border border-slate-700 text-cyan-300 font-mono">Flask SQLAlchemy</span>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-sm font-semibold text-white uppercase tracking-wider mb-4 font-heading">Healthcare Services</h4>
+                    <ul class="space-y-2.5 text-xs">
+                        <li><a href="{{ url_for('intelligence.triage') }}" class="hover:text-teal-400 transition">Smart Healthcare Triage</a></li>
+                        <li><a href="{{ url_for('medicine.order_meds') }}" class="hover:text-teal-400 transition">Online E-Pharmacy</a></li>
+                        <li><a href="{{ url_for('consultation.consult') }}" class="hover:text-teal-400 transition">Doctor Consultations</a></li>
+                        <li><a href="{{ url_for('prescription.upload_page') }}" class="hover:text-teal-400 transition">Prescription OCR Scanner</a></li>
+                        <li><a href="{{ url_for('ambulance.call_ambulance') }}" class="hover:text-teal-400 transition">Emergency Dispatch Tracking</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-sm font-semibold text-white uppercase tracking-wider mb-4 font-heading">Platform & Legal</h4>
+                    <ul class="space-y-2.5 text-xs">
+                        <li><a href="{{ url_for('main.about_us') }}" class="hover:text-teal-400 transition">About Our Mission</a></li>
+                        <li><a href="{{ url_for('main.contact_us') }}" class="hover:text-teal-400 transition">Contact & Support</a></li>
+                        <li><a href="{{ url_for('main.getting_started') }}" class="hover:text-teal-400 transition">Getting Started Guide</a></li>
+                        <li><span class="text-slate-500">Medical Decision Support Disclaimer</span></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-sm font-semibold text-white uppercase tracking-wider mb-4 font-heading">Hackathon Track</h4>
+                    <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-xs">
+                        <span class="text-teal-400 font-semibold block mb-1">Code to Cure – Data-Driven Healthcare</span>
+                        <p class="text-[11px] text-slate-400 leading-normal">
+                            Features real-time PostgreSQL analytics, symptom risk scoring, explainable recommendation pathways, and automated data migration.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-8 border-t border-slate-900 flex flex-col md:flex-row items-center justify-between text-xs text-slate-400 gap-4">
+                <p>© 2026 ReachMe Healthcare Platform. Built for Hackathon Excellence.</p>
+                <div class="flex items-center gap-4">
+                    <span class="hover:text-slate-300">Privacy Policy</span>
+                    <span class="hover:text-slate-300">Terms of Service</span>
+                    <span class="hover:text-slate-300">HIPAA Data Standards</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

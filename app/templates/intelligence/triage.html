@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %}Smart Healthcare Triage & Recommendation Engine - ReachMe{% endblock %}
+
+{% block content %}
+<section class="py-12">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="text-center max-w-3xl mx-auto mb-10">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-300 text-xs font-semibold uppercase tracking-wider mb-3">
+                <i class="fa-solid fa-brain"></i> Hackathon Track: Code to Cure – Data-Driven Healthcare
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-white font-heading">Smart Healthcare Access & Triage Engine</h1>
+            <p class="text-sm text-slate-400 mt-2">
+                Explainable clinical decision-support engine. Evaluates symptom indicators, severity scales, and chronic duration to match patients with available doctors.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Left Form Input -->
+            <div class="lg:col-span-6">
+                <div class="glass-panel p-6 rounded-2xl border border-slate-700/80">
+                    <h2 class="text-lg font-bold text-white font-heading mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-clipboard-user text-teal-400"></i> Describe Symptoms
+                    </h2>
+
+                    <form action="{{ url_for('intelligence.triage') }}" method="POST" class="space-y-5 text-xs">
+                        <div>
+                            <label class="block font-semibold text-slate-300 uppercase tracking-wider mb-1 font-heading">Primary Symptoms & Description</label>
+                            <textarea name="symptoms" required rows="3" placeholder="Describe symptoms in detail (e.g. High fever, headache, chest tightness, rash)..." class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-xs leading-relaxed focus:outline-none focus:border-teal-500"></textarea>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="font-semibold text-slate-300 uppercase tracking-wider font-heading">Reported Severity Scale (1 - 10)</label>
+                                <span id="severity-val" class="font-mono text-teal-400 font-bold text-sm">5/10</span>
+                            </div>
+                            <input type="range" name="severity" min="1" max="10" value="5" oninput="document.getElementById('severity-val').textContent = this.value + '/10'" class="w-full accent-teal-500 cursor-pointer">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block font-semibold text-slate-300 uppercase tracking-wider mb-1 font-heading">Duration (Days)</label>
+                                <input type="number" name="duration" min="1" max="365" value="2" required class="w-full px-3.5 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-300 uppercase tracking-wider mb-1 font-heading">Patient Age</label>
+                                <input type="number" name="age" min="1" max="120" value="28" required class="w-full px-3.5 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full py-3.5 rounded-xl font-bold text-white bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 shadow-lg shadow-teal-500/25 transition">
+                            <i class="fa-solid fa-calculator mr-1"></i> Calculate Healthcare Recommendation
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right Triage Results Output -->
+            <div class="lg:col-span-6">
+                {% if result %}
+                    <div class="glass-panel p-6 rounded-2xl border border-teal-500/50 shadow-2xl relative overflow-hidden">
+                        <div class="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
+                            <div>
+                                <span class="text-[10px] uppercase tracking-widest font-bold text-slate-400 block font-heading">Recommendation Pathway</span>
+                                <h3 class="text-xl font-extrabold text-white font-heading">Urgency: {{ result.urgency_level }}</h3>
+                            </div>
+                            
+                            <div class="text-right">
+                                <span class="text-2xl font-extrabold font-heading text-teal-400 block">{{ result.risk_score }}%</span>
+                                <span class="text-[10px] text-slate-400 font-mono">Calculated Risk</span>
+                            </div>
+                        </div>
+
+                        <!-- Contributing Factors Section -->
+                        <div class="mb-6">
+                            <h4 class="text-xs font-bold text-white uppercase tracking-wider font-heading mb-2.5 flex items-center gap-1.5">
+                                <i class="fa-solid fa-circle-nodes text-teal-400"></i> Explainable Contributing Factors:
+                            </h4>
+                            <div class="space-y-2">
+                                {% for factor in result.contributing_factors %}
+                                    <div class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-200 flex items-start gap-2">
+                                        <i class="fa-solid fa-check text-teal-400 text-xs mt-0.5"></i>
+                                        <span>{{ factor }}</span>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Recommended Actions & Specialist -->
+                        <div class="p-4 rounded-xl bg-teal-950/40 border border-teal-500/30 space-y-3 mb-6">
+                            <div>
+                                <span class="text-[10px] font-bold text-teal-400 uppercase tracking-widest block font-heading">Recommended Specialty</span>
+                                <span class="text-base font-bold text-white font-heading">{{ result.recommended_specialization }}</span>
+                            </div>
+
+                            {% if result.recommended_doctor_name %}
+                                <div class="pt-2 border-t border-teal-500/20 flex items-center justify-between">
+                                    <div>
+                                        <span class="text-[10px] text-slate-400 block">Matched Practitioner</span>
+                                        <span class="text-xs font-bold text-white font-heading">{{ result.recommended_doctor_name }}</span>
+                                    </div>
+                                    <a href="{{ url_for('consultation.consult', search=result.recommended_doctor_name) }}" class="px-3 py-1.5 rounded-lg bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs transition">
+                                        Book Doctor
+                                    </a>
+                                </div>
+                            {% endif %}
+
+                            <div class="pt-2 border-t border-teal-500/20 text-xs text-teal-200">
+                                <span class="font-bold">Suggested Action:</span> {{ result.recommended_action }}
+                            </div>
+                        </div>
+
+                        <div class="text-[10px] text-slate-400 italic text-center">
+                            Disclaimer: This intelligent recommendation pathway is a decision-support feature, NOT a diagnostic medical advice system.
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="glass-panel p-6 rounded-2xl border border-slate-700/80 min-h-[350px] flex items-center justify-center text-center">
+                        <div class="max-w-xs">
+                            <i class="fa-solid fa-brain text-4xl text-teal-500/40 mb-3"></i>
+                            <h3 class="text-sm font-bold text-white font-heading mb-1">Awaiting Symptom Input</h3>
+                            <p class="text-xs text-slate-400 leading-relaxed">
+                                Enter your symptoms and severity scale on the left to run our data-driven triage recommendation algorithm.
+                            </p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+        </div>
+
+    </div>
+</section>
+{% endblock %}

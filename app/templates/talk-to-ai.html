@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Talk to AI Voice Assistant - ReachMe{% endblock %}
+
+{% block content %}
+<section class="py-16">
+    <div class="max-w-3xl mx-auto px-4">
+        <div class="glass-panel p-8 sm:p-12 rounded-2xl border border-slate-700/80 text-center">
+            <div class="w-16 h-16 rounded-2xl bg-teal-500/20 text-teal-400 mx-auto flex items-center justify-center text-3xl mb-4 shadow-lg shadow-teal-500/20">
+                <i class="fa-solid fa-microphone-lines"></i>
+            </div>
+            
+            <span class="text-xs font-bold text-teal-400 uppercase tracking-widest block mb-1 font-heading">Voice Interactive Assistant</span>
+            <h1 class="text-3xl font-extrabold text-white font-heading mb-2">ReachMe AI Voice Assistant</h1>
+            <p class="text-xs text-slate-400 mb-8">Place medicine orders or state symptoms hands-free using Web Speech Synthesis & Recognition</p>
+
+            <div class="p-6 rounded-2xl bg-slate-900 border border-slate-800 text-left text-xs mb-8 min-h-[180px] space-y-2" id="voice-response">
+                <p class="text-slate-400 italic">Click "Start Voice Assistant" to begin interactive voice prompts.</p>
+            </div>
+
+            <form action="{{ url_for('medicine.submit_order') }}" method="POST" id="voice-order-form" class="hidden">
+                <input type="hidden" name="Full_name" id="Full_name">
+                <input type="hidden" name="Phone_number" id="Phone_number">
+                <input type="hidden" name="Medication" id="Medication">
+                <input type="hidden" name="Quantity" id="Quantity" value="1">
+                <input type="hidden" name="Shipping_address" id="Shipping_address">
+                <button type="submit" class="px-6 py-3 rounded-xl font-bold text-white bg-teal-600 hover:bg-teal-500 transition">
+                    Submit Voice Recorded Order
+                </button>
+            </form>
+
+            <button type="button" onclick="startConversation()" id="start-voice-btn" class="px-8 py-3.5 rounded-xl font-bold text-white bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 shadow-lg shadow-teal-500/25 transition">
+                Start Voice Assistant
+            </button>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const questions = [
+    "What is your full name?",
+    "What is your contact phone number?",
+    "Which medicine do you require?",
+    "Where should we deliver your medicine?"
+];
+let currentQuestion = 0;
+
+function speak(text) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    window.speechSynthesis.speak(utterance);
+}
+
+function listen() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        document.getElementById("voice-response").innerHTML += `<p class="text-rose-400">Web Speech API is not supported in this browser. Please use Chrome/Edge.</p>`;
+        return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    
+    recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        const box = document.getElementById("voice-response");
+        box.innerHTML += `<div class="mb-2"><span class="text-teal-400 font-bold">${questions[currentQuestion]}</span> <span class="text-white block font-mono">${transcript}</span></div>`;
+
+        switch (currentQuestion) {
+            case 0: document.getElementById("Full_name").value = transcript; break;
+            case 1: document.getElementById("Phone_number").value = transcript; break;
+            case 2: document.getElementById("Medication").value = transcript; break;
+            case 3: document.getElementById("Shipping_address").value = transcript; break;
+        }
+
+        currentQuestion++;
+
+        if (currentQuestion < questions.length) {
+            setTimeout(() => {
+                speak(questions[currentQuestion]);
+                listen();
+            }, 1000);
+        } else {
+            speak("Thank you! Your order details have been recorded. You can now submit your order.");
+            document.getElementById("voice-order-form").classList.remove("hidden");
+            document.getElementById("start-voice-btn").classList.add("hidden");
+        }
+    };
+
+    recognition.onerror = (e) => {
+        console.warn("Voice recognition error: ", e);
+    };
+
+    recognition.start();
+}
+
+function startConversation() {
+    currentQuestion = 0;
+    document.getElementById("voice-response").innerHTML = "";
+    speak(questions[currentQuestion]);
+    listen();
+}
+</script>
+{% endblock %}

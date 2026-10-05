@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}Order Medicines Online - ReachMe Pharmacy{% endblock %}
+
+{% block content %}
+<section class="py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="text-center max-w-3xl mx-auto mb-10">
+            <span class="text-xs font-bold text-teal-400 uppercase tracking-widest block mb-2 font-heading">Online E-Pharmacy</span>
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-white font-heading">Order Verified Medicines</h1>
+            <p class="text-sm text-slate-400 mt-2">
+                All medicine prices, availability, and stock levels are verified strictly on our Neon PostgreSQL backend.
+            </p>
+        </div>
+
+        <!-- Search and Filter Bar -->
+        <div class="glass-panel p-4 rounded-2xl border border-slate-700/80 mb-10">
+            <form method="GET" action="{{ url_for('medicine.order_meds') }}" class="flex flex-col sm:flex-row gap-4">
+                <div class="relative flex-grow">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 text-sm">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+                    <input type="text" name="search" value="{{ search_query }}" placeholder="Search medicines by name (e.g. Paracetamol, Amoxicillin)..." class="w-full pl-10 pr-4 py-2.5 bg-slate-900/90 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:border-teal-500">
+                </div>
+                
+                <div class="sm:w-64">
+                    <select name="category" onchange="this.form.submit()" class="w-full px-4 py-2.5 bg-slate-900/90 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-none focus:border-teal-500">
+                        <option value="">All Categories</option>
+                        {% for cat in categories %}
+                            <option value="{{ cat.id }}" {% if selected_category == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button type="submit" class="px-6 py-2.5 rounded-xl font-semibold text-white bg-teal-600 hover:bg-teal-500 transition text-sm">
+                    Search
+                </button>
+            </form>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            <!-- Medicine Catalog Cards -->
+            <div class="lg:col-span-7">
+                <h2 class="text-lg font-bold text-white font-heading mb-4">Available Inventory ({{ medicines|length }})</h2>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {% for med in medicines %}
+                        <div class="glass-card p-4 rounded-xl border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition">
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-xs font-semibold px-2 py-0.5 rounded bg-teal-500/10 text-teal-300 border border-teal-500/20">
+                                        {{ med.category.name if med.category else 'General' }}
+                                    </span>
+                                    {% if med.requires_prescription %}
+                                        <span class="text-[10px] font-bold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded">Rx Required</span>
+                                    {% endif %}
+                                </div>
+                                <h3 class="text-base font-bold text-white font-heading">{{ med.name }}</h3>
+                                <p class="text-xs text-slate-400 mt-1 mb-3">{{ med.dosage or 'Standard dosage instructions' }}</p>
+                            </div>
+                            
+                            <div class="pt-3 border-t border-slate-800 flex items-center justify-between">
+                                <span class="text-base font-extrabold text-teal-400 font-heading">₹{{ med.price|int }}</span>
+                                <button type="button" onclick="selectMedicine('{{ med.name }}', {{ med.price }})" class="px-3 py-1.5 rounded-lg bg-teal-500/20 hover:bg-teal-500 text-teal-300 hover:text-white font-semibold text-xs transition">
+                                    Select for Order
+                                </button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Order Form Container -->
+            <div class="lg:col-span-5">
+                <div class="glass-panel p-6 rounded-2xl border border-slate-700/80 sticky top-24">
+                    <h2 class="text-lg font-bold text-white font-heading mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-cart-flatbed text-teal-400"></i> Place Medicine Order
+                    </h2>
+
+                    <form action="{{ url_for('medicine.submit_order') }}" method="POST" class="space-y-4 text-xs">
+                        <div>
+                            <label class="block font-semibold text-slate-300 uppercase tracking-wider mb-1 font-heading">Full Name</label>
+                            <input type="text" name="Full_name" required value="{{ current_user.full_name if current_user else '' }}" placeholder="Enter full name" class="w-full px-3.5 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white">
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-slate-300 uppercase tracking-wider mb-1 font-heading">Phone Number</label>
+                            <input type="tel" name="Phone_number" required value="{{ current_user.phone if current_user else '' }}" placeholder="+91 98765 43210" class="w-full px-3.5 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white">
+                        </div>
+
+                        <!-- Dynamic Items List -->
+                        <div id="medications-container" class="space-y-3">
+                            <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center gap-2 flex-row-item">
+                                <div class="flex-grow">
+                                    <label class="block text-[11px] font-semibold text-slate-400 mb-0.5">Medication Name</label>
+                                    <input type="text" name="Medication" required placeholder="e.g. Paracetamol" class="w-full px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white med-name-input">
+                                </div>
+                                <div class="w-20">
+                                    <label class="block text-[11px] font-semibold text-slate-400 mb-0.5">Qty</label>
+                                    <input type="number" name="Quantity" min="1" value="1" required class="w-full px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="addMedicationRow()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold">
+                                + Add Another Item
+                            </button>
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-slate-300 uppercase tracking-wider mb-1 font-heading">Delivery Address</label>
+                            <textarea name="Shipping_address" required rows="2" placeholder="Full shipping address" class="w-full px-3.5 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white"></textarea>
+                        </div>
+
+                        <button type="submit" class="w-full py-3 rounded-xl font-bold text-white bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 shadow-lg shadow-teal-500/25 transition">
+                            Submit Order
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function selectMedicine(name, price) {
+    const inputs = document.querySelectorAll('.med-name-input');
+    let filled = false;
+    inputs.forEach(input => {
+        if (!input.value && !filled) {
+            input.value = name;
+            filled = true;
+        }
+    });
+    if (!filled) {
+        addMedicationRow(name);
+    }
+}
+
+function addMedicationRow(defaultName = '') {
+    const container = document.getElementById('medications-container');
+    const div = document.createElement('div');
+    div.className = 'p-3 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center gap-2 flex-row-item';
+    div.innerHTML = `
+        <div class="flex-grow">
+            <label class="block text-[11px] font-semibold text-slate-400 mb-0.5">Medication Name</label>
+            <input type="text" name="Medication" value="${defaultName}" required placeholder="e.g. Ibuprofen" class="w-full px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white med-name-input">
+        </div>
+        <div class="w-20">
+            <label class="block text-[11px] font-semibold text-slate-400 mb-0.5">Qty</label>
+            <input type="number" name="Quantity" min="1" value="1" required class="w-full px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white">
+        </div>
+        <button type="button" onclick="this.parentElement.remove()" class="text-rose-400 hover:text-rose-300 pt-4 px-1">
+            <i class="fa-solid fa-trash"></i>
+        </button>
+    `;
+    container.appendChild(div);
+}
+</script>
+{% endblock %}

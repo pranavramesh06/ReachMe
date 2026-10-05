@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}About Us - ReachMe Healthcare{% endblock %}
+
+{% block content %}
+<section class="py-16">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="glass-panel p-8 sm:p-12 rounded-2xl border border-slate-700/80">
+            <span class="text-xs font-bold text-teal-400 uppercase tracking-widest block mb-2 font-heading">Our Mission & Vision</span>
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-white font-heading mb-6">Democratizing Access to Telemedicine</h1>
+            
+            <p class="text-sm text-slate-300 leading-relaxed mb-6">
+                ReachMe was originally conceived to provide rural and underserved communities with instant access to qualified doctors, prescription OCR tools, and online medication ordering.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 my-8">
+                <div class="p-5 rounded-xl bg-slate-900/80 border border-slate-800">
+                    <h3 class="text-base font-bold text-white font-heading mb-2 text-teal-400">PostgreSQL Relational Storage</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Migrated from basic Excel spreadsheets to Neon PostgreSQL database infrastructure, ensuring normalized tables, transactional safety, and zero data loss.
+                    </p>
+                </div>
+                <div class="p-5 rounded-xl bg-slate-900/80 border border-slate-800">
+                    <h3 class="text-base font-bold text-white font-heading mb-2 text-sky-400">Data-Driven Healthcare</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Features our Smart Triage Recommendation Engine which explains contributing risk factors to both patients and practitioners transparently.
+                    </p>
+                </div>
+            </div>
+
+            <div class="pt-6 border-t border-slate-800 flex justify-between items-center text-xs text-slate-400">
+                <span>ReachMe Healthcare Platform</span>
+                <a href="{{ url_for('main.index') }}" class="text-teal-400 font-semibold hover:underline">Back to Home</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

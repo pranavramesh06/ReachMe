@@ -1,0 +1,28 @@
+# Environment variables
+.env
+.env.local
+
+# Python cache & virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+ENV/
+
+# Database files
+*.db
+*.sqlite3
+
+# Uploads
+app/static/uploads/*
+!app/static/uploads/.gitkeep
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Getting Started - ReachMe Platform Guide{% endblock %}
+
+{% block content %}
+<section class="py-16">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="glass-panel p-8 sm:p-12 rounded-2xl border border-slate-700/80">
+            <span class="text-xs font-bold text-teal-400 uppercase tracking-widest block mb-2 font-heading">User Guide</span>
+            <h1 class="text-3xl font-extrabold text-white font-heading mb-8">Getting Started with ReachMe</h1>
+
+            <div class="space-y-8">
+                <div class="flex gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold text-lg shrink-0">1</div>
+                    <div>
+                        <h3 class="text-base font-bold text-white font-heading mb-1">Create an Account or Log In</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Register as a Patient, Doctor, or Administrator to access dedicated dashboards, order tracking, and appointment management.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold text-lg shrink-0">2</div>
+                    <div>
+                        <h3 class="text-base font-bold text-white font-heading mb-1">Use Smart Healthcare Triage</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Describe your health symptoms to get an instant, explainable risk assessment and matching doctor recommendation.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center font-bold text-lg shrink-0">3</div>
+                    <div>
+                        <h3 class="text-base font-bold text-white font-heading mb-1">Order Verified Medicines or Consult Doctors</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Browse the e-pharmacy with real-time stock checks, or schedule appointments with specialized medical practitioners.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-10 pt-6 border-t border-slate-800 flex justify-end">
+                <a href="{{ url_for('intelligence.triage') }}" class="px-6 py-3 rounded-xl font-semibold text-white bg-teal-600 hover:bg-teal-500 transition text-xs">
+                    Start Using ReachMe Triage Engine
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Doctor Dashboard - ReachMe{% endblock %}
+
+{% block content %}
+<section class="py-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Doctor Header Banner -->
+        <div class="glass-panel p-8 rounded-2xl border border-slate-700/80 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+            <div>
+                <span class="inline-block text-xs font-bold px-3 py-1 rounded-full bg-teal-500/10 text-teal-300 border border-teal-500/20 mb-2 font-heading uppercase">
+                    PRACTITIONER PORTAL
+                </span>
+                <h1 class="text-3xl font-extrabold text-white font-heading">{{ doctor.name }}</h1>
+                <p class="text-xs text-slate-400 mt-1">{{ doctor.specialty }} • {{ doctor.experience_years }} Years Clinical Practice • Fee: ₹{{ doctor.consultation_fee|int }}</p>
+            </div>
+            <div class="flex items-center gap-4 text-center">
+                <div class="p-3 rounded-xl bg-slate-900 border border-slate-800">
+                    <span class="block text-2xl font-bold font-heading text-teal-400">{{ upcoming|length }}</span>
+                    <span class="text-[10px] text-slate-400 uppercase font-semibold">Upcoming</span>
+                </div>
+                <div class="p-3 rounded-xl bg-slate-900 border border-slate-800">
+                    <span class="block text-2xl font-bold font-heading text-emerald-400">{{ completed|length }}</span>
+                    <span class="text-[10px] text-slate-400 uppercase font-semibold">Completed</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appointment Requests Table -->
+        <div class="glass-card rounded-2xl p-6 border border-slate-800">
+            <h2 class="text-lg font-bold text-white font-heading mb-6 flex items-center gap-2">
+                <i class="fa-solid fa-calendar-days text-teal-400"></i> Patient Consultations Schedule
+            </h2>
+
+            {% if appointments %}
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs text-left text-slate-300">
+                        <thead class="text-[11px] uppercase bg-slate-900/80 text-slate-400 font-heading">
+                            <tr>
+                                <th class="p-3">Patient Name</th>
+                                <th class="p-3">Phone</th>
+                                <th class="p-3">Date & Slot</th>
+                                <th class="p-3">Clinical Problem</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3 text-right">Update Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800">
+                            {% for app in appointments %}
+                                <tr class="hover:bg-slate-800/40">
+                                    <td class="p-3 font-semibold text-white">{{ app.patient_name }}</td>
+                                    <td class="p-3 font-mono text-slate-300">{{ app.patient_phone }}</td>
+                                    <td class="p-3 font-mono text-teal-300">{{ app.appointment_date }} @ {{ app.time_slot }}</td>
+                                    <td class="p-3 max-w-[200px] truncate">{{ app.problem_description }}</td>
+                                    <td class="p-3">
+                                        <span class="px-2.5 py-0.5 rounded text-[10px] font-bold 
+                                            {% if app.status == 'CONFIRMED' %} bg-teal-500/20 text-teal-300 border border-teal-500/30
+                                            {% elif app.status == 'COMPLETED' %} bg-emerald-500/20 text-emerald-300 border border-emerald-500/30
+                                            {% else %} bg-rose-500/20 text-rose-300 border border-rose-500/30 {% endif %}">
+                                            {{ app.status }}
+                                        </span>
+                                    </td>
+                                    <td class="p-3 text-right">
+                                        <form action="{{ url_for('doctor.update_appointment', app_id=app.id) }}" method="POST" class="inline-flex gap-1">
+                                            <input type="hidden" name="status" value="COMPLETED">
+                                            <button type="submit" class="px-2.5 py-1 rounded bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-white font-semibold text-[10px] transition">
+                                                Mark Done
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-12 text-slate-400 text-xs">
+                    No consultation requests currently assigned.
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+</section>
+{% endblock %}

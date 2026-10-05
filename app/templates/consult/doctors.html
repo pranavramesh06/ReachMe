@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block title %}Consult Doctors Online - ReachMe Telemedicine{% endblock %}
+
+{% block content %}
+<section class="py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="text-center max-w-3xl mx-auto mb-10">
+            <span class="text-xs font-bold text-teal-400 uppercase tracking-widest block mb-2 font-heading">Tele-Consultation Network</span>
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-white font-heading">Consult Top Medical Specialists</h1>
+            <p class="text-sm text-slate-400 mt-2">
+                Real-time appointment slot booking with double-booking prevention controlled by backend database logic.
+            </p>
+        </div>
+
+        <!-- Search & Specialty Filter -->
+        <div class="glass-panel p-4 rounded-2xl border border-slate-700/80 mb-10">
+            <form method="GET" action="{{ url_for('consultation.consult') }}" class="flex flex-col sm:flex-row gap-4">
+                <div class="relative flex-grow">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 text-sm">
+                        <i class="fa-solid fa-user-doctor"></i>
+                    </span>
+                    <input type="text" name="search" value="{{ search_query }}" placeholder="Search doctor by name (e.g. Dr. John Smith)..." class="w-full pl-10 pr-4 py-2.5 bg-slate-900/90 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:border-teal-500">
+                </div>
+                
+                <div class="sm:w-64">
+                    <select name="specialty" onchange="this.form.submit()" class="w-full px-4 py-2.5 bg-slate-900/90 border border-slate-700 rounded-xl text-slate-100 text-sm focus:outline-none focus:border-teal-500">
+                        <option value="">All Specializations</option>
+                        {% for spec in specializations %}
+                            <option value="{{ spec.name }}" {% if selected_specialty == spec.name %}selected{% endif %}>{{ spec.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button type="submit" class="px-6 py-2.5 rounded-xl font-semibold text-white bg-teal-600 hover:bg-teal-500 transition text-sm">
+                    Filter
+                </button>
+            </form>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            <!-- Doctor List Cards -->
+            <div class="lg:col-span-7">
+                <h2 class="text-lg font-bold text-white font-heading mb-4">Practitioner Directory ({{ doctors|length }})</h2>
+                
+                <div class="space-y-4">
+                    {% for doc in doctors %}
+                        <div class="glass-card p-5 rounded-2xl border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:border-slate-700 transition">
+                            <div class="flex items-start gap-4">
+                                <div class="w-14 h-14 rounded-2xl gradient-bg flex items-center justify-center text-white text-2xl shrink-0 shadow-lg shadow-teal-500/10">
+                                    <i class="fa-solid fa-user-md"></i>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <h3 class="text-base font-bold text-white font-heading">{{ doc.name }}</h3>
+                                        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-teal-500/10 text-teal-300 border border-teal-500/20">
+                                            {{ doc.specialty }}
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-slate-400 mb-2">{{ doc.bio or 'Specialist offering tele-consultations.' }}</p>
+                                    <div class="flex items-center gap-4 text-[11px] text-slate-400">
+                                        <span><i class="fa-solid fa-briefcase text-teal-400 mr-1"></i>{{ doc.experience_years }} Yrs Exp</span>
+                                        <span><i class="fa-solid fa-star text-amber-400 mr-1"></i>{{ doc.rating }} Rating</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="sm:text-right shrink-0 w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-0 border-slate-800 flex sm:flex-col items-center sm:items-end justify-between gap-2">
+                                <span class="text-lg font-extrabold text-white font-heading">₹{{ doc.consultation_fee|int }}</span>
+                                <button type="button" onclick="selectDoctor('{{ doc.name }}', '{{ doc.specialty }}')" class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold text-xs shadow-md shadow-teal-500/20 transition">
+                                    Book Appointment
+                                </button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Appointment Booking Form Container -->
+            <div class="lg:col-span-5">
+                <div class="glass-panel p-6 rounded-2xl border border-slate-700/80 sticky top-24">
+                    <h2 class="text-lg font-bold text-white font-heading mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-plus text-teal-400"></i> Book Consultation Slot
+                    </h2>
+
+                    <form action="{{ url_for('consultation.submit_consult') }}" method="POST" class="space-y-4 text-xs">
+                        <div>
+                            <label class="block font-semibold text-slate-300 uppercase tracking-wider mb-1 font-heading">Patient Name</label>
+                            <input type="text" id="patient_name" name="name" required value="{{ current_user.full_name if current_user else '' }}" placeholder="Enter patient name" class="w-full px-3.5 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white">
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-slate-300 uppercase tracking-wider mb-1 font-heading">Phone Number</label>
+                            <input type="tel" id="patient_phone" name="phone" required value="{{ current_user.phone if current_user else '' }}" placeholder="+91 98765 43210" class="w-full px-3.5 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white">
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-slate-300 uppercase tracking-wider mb-1 font-heading">Select Doctor</label>
+                            <select id="doctor_select" name="doctor" required class="w-full px-3.5 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white">
+                                {% for doc in doctors %}
+                                    <option value="{{ doc.name }}: {{ doc.specialty }}">{{ doc.name }} - {{ doc.specialty }} (₹{{ doc.consultation_fee|int }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-slate-300 uppercase tracking-wider mb-1 font-heading">Problem / Health Symptoms</label>
+                            <textarea name="problem" required rows="2" placeholder="Briefly describe your symptoms or reason for visit" class="w-full px-3.5 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white"></textarea>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block font-semibold text-slate-300 uppercase tracking-wider mb-1 font-heading">Date</label>
+                                <input type="date" name="date" required value="2026-10-10" class="w-full px-3.5 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-slate-300 uppercase tracking-wider mb-1 font-heading">Time Slot</label>
+                                <select name="time_slot" required class="w-full px-3.5 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white">
+                                    <option value="10:00 AM">10:00 AM</option>
+                                    <option value="11:30 AM">11:30 AM</option>
+                                    <option value="02:00 PM">02:00 PM</option>
+                                    <option value="04:30 PM">04:30 PM</option>
+                                    <option value="06:00 PM">06:00 PM</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full py-3 rounded-xl font-bold text-white bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 shadow-lg shadow-teal-500/25 transition">
+                            Confirm Appointment Booking
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function selectDoctor(name, specialty) {
+    const select = document.getElementById('doctor_select');
+    const targetVal = `${name}: ${specialty}`;
+    for (let i = 0; i < select.options.length; i++) {
+        if (select.options[i].value.includes(name)) {
+            select.selectedIndex = i;
+            break;
+        }
+    }
+}
+</script>
+{% endblock %}
