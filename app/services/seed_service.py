@@ -51,6 +51,28 @@ def migrate_and_seed_data(base_dir=None):
         )
         db.session.add(patient_profile)
 
+    demo_doctor = User.query.filter_by(email='doctor@reachme.com').first()
+    if not demo_doctor:
+        demo_doctor = User(
+            email='doctor@reachme.com',
+            full_name='Dr. John Smith',
+            phone='+91 99000 11223',
+            role='DOCTOR'
+        )
+        demo_doctor.set_password('doctor123')
+        db.session.add(demo_doctor)
+
+    dr_johnsmith = User.query.filter_by(email='dr.johnsmith@reachme.com').first()
+    if not dr_johnsmith:
+        dr_johnsmith = User(
+            email='dr.johnsmith@reachme.com',
+            full_name='Dr. John Smith',
+            phone='+91 99000 11223',
+            role='DOCTOR'
+        )
+        dr_johnsmith.set_password('doctor123')
+        db.session.add(dr_johnsmith)
+
     db.session.commit()
 
     # 2. Migrate Medicine Prices (medicine_prices.xlsx)

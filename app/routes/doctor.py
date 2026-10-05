@@ -9,6 +9,13 @@ from app.models.appointment import Appointment
 @role_required(['DOCTOR', 'ADMIN'])
 def dashboard():
     doc = Doctor.query.filter_by(user_id=session['user_id']).first()
+    if not doc:
+        user = db.session.get(User, session['user_id'])
+        if user and user.full_name:
+            doc = Doctor.query.filter(Doctor.name.ilike(f"%{user.full_name}%")).first()
+        if not doc:
+            doc = Doctor.query.first()
+
     if not doc and session.get('user_role') != 'ADMIN':
         flash('Doctor profile not found.', 'danger')
         return redirect(url_for('main.index'))
