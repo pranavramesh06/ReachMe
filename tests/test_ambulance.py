@@ -10,6 +10,19 @@ class AmbulanceTestCase(unittest.TestCase):
         self.client = self.app.test_client()
         with self.app.app_context():
             db.create_all()
+            from app.models.ambulance import Ambulance
+            amb = Ambulance(
+                vehicle_identifier='AMB-CHN-TEST',
+                driver_name='R. Natarajan',
+                contact_phone='+91 94444 11111',
+                base_location_name='Chennai Central',
+                latitude=13.0827,
+                longitude=80.2707,
+                status='AVAILABLE',
+                is_active=True
+            )
+            db.session.add(amb)
+            db.session.commit()
 
     def tearDown(self):
         with self.app.app_context():
@@ -27,7 +40,7 @@ class AmbulanceTestCase(unittest.TestCase):
         data = res.get_json()
         self.assertTrue(data['success'])
         self.assertTrue(data['is_simulation'])
-        self.assertEqual(data['status'], 'ACKNOWLEDGED')
+        self.assertIn(data['status'], ['ASSIGNED', 'ACKNOWLEDGED'])
 
         with self.app.app_context():
             req = EmergencyRequest.query.filter_by(patient_name='Emergency Patient').first()

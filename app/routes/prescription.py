@@ -1,9 +1,11 @@
 import os
 import json
-from flask import render_template, request, jsonify, flash, redirect, url_for, session, current_app
+from flask import render_template, request, jsonify, flash, redirect, url_for, session, current_app, send_from_directory, abort
 from werkzeug.utils import secure_filename
 from app.routes import prescription_bp
+from app.routes.auth import login_required
 from app.models import db
+from app.models.user import User
 from app.models.prescription import Prescription
 from app.services.ocr_service import process_prescription_image
 
@@ -58,7 +60,7 @@ def upload():
             file_path=f"/static/uploads/{unique_filename}",
             raw_ocr_text=ocr_result.get('raw_text', ''),
             verified_medications_json=json.dumps(ocr_result.get('extracted_meds', [])),
-            status='PENDING_VERIFICATION'
+            status='PENDING_REVIEW'
         )
         db.session.add(prescription)
         db.session.commit()
@@ -68,9 +70,27 @@ def upload():
             'text': ocr_result.get('raw_text', ''),
             'extracted_meds': ocr_result.get('extracted_meds', []),
             'prescription_id': prescription.id,
-            'file_url': prescription.file_path,
+            'file_url': url_for('prescription.view_file', rx_id=prescription.id),
             'notice': 'OCR extracted text is unverified raw text. Doctor verification is required before medical use.'
         })
 
     except Exception as e:
         return jsonify({'error': str(e)}), 400
+
+@prescription_bp.route('/view/<int:rx_id>')
+@login_required
+def view_file(rx_id):
+    """
+    Secure file access: ensures prescription files cannot be accessed
+    by unauthorized users or guessing file names.
+    Allowed for: patient owner, reviewing doctor, or admin.
+    """
+    rx = Prescription.query.get_or_404(rx_id)
+    user_id = session.get('user_id')
+    user_role = session.get('user_role')
+
+    if user_role not in ['DOCTOR', 'ADMIN'] and rx.patient_id != user_id:
+        abort(403)
+
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    return send_from_directory(upload_folder, rx.filename)

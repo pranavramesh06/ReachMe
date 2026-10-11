@@ -1,61 +1,423 @@
 {% extends 'base.html' %}
 
-{% block title %}Doctor Portal — ReachMe{% endblock %}
+{% block title %}Clinical Workspace — {{ doctor.name }} — ReachMe{% endblock %}
 
 {% block content %}
-<section class="py-10 sm:py-14">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+<div class="min-h-screen bg-slate-100/70 py-6 sm:py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        <!-- Doctor Header Banner -->
-        <div class="clean-card rounded-2xl p-6 sm:p-8 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-            <div>
-                <span class="inline-block text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-800 border border-teal-100 mb-2">
-                    Medical Practitioner Portal
-                </span>
-                <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">{{ doctor.name }}</h1>
-                <p class="text-xs text-slate-500 mt-1">{{ doctor.specialty }} • {{ doctor.experience_years }} Years Clinical Practice • Fee: ₹{{ doctor.consultation_fee|int }}</p>
+        <!-- Clinical Header Bar -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6 mb-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-2xl bg-teal-600 text-white flex items-center justify-center font-bold text-xl shadow-sm shrink-0">
+                        <i class="fa-solid fa-user-doctor"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">{{ doctor.name }}</h1>
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Active Practitioner
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-0.5">
+                            {{ doctor.specialty }} • {{ doctor.experience_years }} Years Clinical Practice • Fee: ₹{{ doctor.consultation_fee|int }} • Rating: <i class="fa-solid fa-star text-amber-400 text-[10px]"></i> {{ doctor.rating }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Quick Metric Badges -->
+                <div class="grid grid-cols-4 gap-2 sm:gap-3 text-center">
+                    <div class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/70">
+                        <span class="block text-lg font-bold text-teal-700">{{ today_appointments|length }}</span>
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold">Today</span>
+                    </div>
+                    <div class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/70">
+                        <span class="block text-lg font-bold text-sky-700">{{ upcoming|length }}</span>
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold">Upcoming</span>
+                    </div>
+                    <div class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/70">
+                        <span class="block text-lg font-bold {% if pending_approvals|length > 0 %}text-amber-600 animate-pulse{% else %}text-slate-700{% endif %}">
+                            {{ pending_approvals|length }}
+                        </span>
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold">Rx Review</span>
+                    </div>
+                    <div class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/70">
+                        <span class="block text-lg font-bold text-emerald-700">{{ completed|length }}</span>
+                        <span class="text-[10px] text-slate-400 uppercase font-semibold">Done</span>
+                    </div>
+                </div>
             </div>
-            <div class="flex items-center gap-3">
-                <div class="px-4 py-3 rounded-xl bg-slate-50 border border-slate-200/80 text-center min-w-[90px]">
-                    <span class="block text-2xl font-bold text-teal-700">{{ upcoming|length }}</span>
-                    <span class="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Upcoming</span>
-                </div>
-                <div class="px-4 py-3 rounded-xl bg-slate-50 border border-slate-200/80 text-center min-w-[90px]">
-                    <span class="block text-2xl font-bold text-emerald-700">{{ completed|length }}</span>
-                    <span class="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Completed</span>
-                </div>
+
+            <!-- Workspace Navigation Tabs -->
+            <div class="mt-6 pt-4 border-t border-slate-100 flex flex-wrap gap-2 text-xs">
+                <a href="{{ url_for('doctor.dashboard', tab='overview') }}" class="px-3.5 py-1.5 rounded-xl font-semibold transition {% if tab == 'overview' %}bg-slate-900 text-white shadow-xs{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
+                    <i class="fa-solid fa-chart-pie mr-1"></i> Clinical Overview
+                </a>
+                <a href="{{ url_for('doctor.dashboard', tab='prescriptions') }}" class="px-3.5 py-1.5 rounded-xl font-semibold transition flex items-center gap-1.5 {% if tab == 'prescriptions' %}bg-slate-900 text-white shadow-xs{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
+                    <i class="fa-solid fa-file-prescription mr-1"></i> Rx Approval Queue
+                    {% if pending_approvals|length > 0 %}
+                        <span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-500 text-white">{{ pending_approvals|length }}</span>
+                    {% endif %}
+                </a>
+                <a href="{{ url_for('doctor.dashboard', tab='appointments') }}" class="px-3.5 py-1.5 rounded-xl font-semibold transition {% if tab == 'appointments' %}bg-slate-900 text-white shadow-xs{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
+                    <i class="fa-solid fa-calendar-check mr-1"></i> Appointments
+                </a>
+                <a href="{{ url_for('doctor.dashboard', tab='notes') }}" class="px-3.5 py-1.5 rounded-xl font-semibold transition {% if tab == 'notes' %}bg-slate-900 text-white shadow-xs{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
+                    <i class="fa-solid fa-notes-medical mr-1"></i> Clinical Notes & Feedback
+                </a>
+                <a href="{{ url_for('doctor.dashboard', tab='availability') }}" class="px-3.5 py-1.5 rounded-xl font-semibold transition {% if tab == 'availability' %}bg-slate-900 text-white shadow-xs{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
+                    <i class="fa-solid fa-clock mr-1"></i> Availability Slots
+                </a>
             </div>
         </div>
 
-        <!-- Appointment Requests Table -->
-        <div class="clean-card rounded-2xl p-6">
-            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-                <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <i class="fa-solid fa-calendar-check text-teal-600"></i> Assigned Patient Consultations
-                </h2>
-                <span class="text-xs text-slate-400">{{ appointments|length }} Total Bookings</span>
+        <!-- TAB 1: OVERVIEW -->
+        {% if tab == 'overview' %}
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Left: Today's Schedule -->
+            <div class="lg:col-span-8 space-y-6">
+                <div class="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-xs">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                        <div>
+                            <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                <i class="fa-solid fa-calendar-day text-teal-600"></i> Today's Consultations Schedule
+                            </h2>
+                            <p class="text-[11px] text-slate-400">Patients booked for today's clinical shift</p>
+                        </div>
+                        <span class="text-xs font-semibold px-2 py-0.5 rounded bg-teal-50 text-teal-700">
+                            {{ today_appointments|length }} Patient(s)
+                        </span>
+                    </div>
+
+                    {% if today_appointments %}
+                        <div class="space-y-3">
+                            {% for app in today_appointments %}
+                                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-bold text-slate-900 text-sm">{{ app.patient_name }}</span>
+                                            <span class="font-mono text-teal-700 font-semibold px-2 py-0.5 bg-white rounded border border-slate-200 text-[11px]">
+                                                {{ app.time_slot }}
+                                            </span>
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold {% if app.status == 'CONFIRMED' %}bg-teal-100 text-teal-800{% else %}bg-slate-200 text-slate-700{% endif %}">
+                                                {{ app.status }}
+                                            </span>
+                                        </div>
+                                        <p class="text-slate-600 mt-1 text-[11px]"><strong class="text-slate-700">Chief Complaint:</strong> {{ app.problem_description }}</p>
+                                        <p class="text-slate-400 text-[10px] mt-0.5"><i class="fa-solid fa-phone text-[9px] mr-1"></i>{{ app.patient_phone }}</p>
+                                    </div>
+                                    <div class="flex items-center gap-2 shrink-0">
+                                        <button onclick="openNoteModal('{{ app.id }}', '{{ app.patient_name }}', '{{ app.problem_description }}')" class="px-3 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-medium text-[11px] transition shadow-xs">
+                                            <i class="fa-solid fa-pen-to-square mr-1"></i> Add Notes
+                                        </button>
+                                        {% if app.status != 'COMPLETED' %}
+                                            <form action="{{ url_for('doctor.update_appointment', app_id=app.id) }}" method="POST" class="inline">
+                                                <input type="hidden" name="status" value="COMPLETED">
+                                                <button type="submit" class="px-3 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-medium text-[11px] transition">
+                                                    Mark Done
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="py-12 text-center text-slate-400 text-xs">
+                            <i class="fa-solid fa-calendar-check text-3xl mb-2 text-slate-300 block"></i>
+                            No appointments scheduled for today. Check upcoming appointments in the Appointments tab.
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Urgent Prescription Approvals Summary -->
+                <div class="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-xs">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                        <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-pills text-amber-600"></i> Prescriptions Awaiting Review
+                        </h2>
+                        <a href="{{ url_for('doctor.dashboard', tab='prescriptions') }}" class="text-xs text-teal-700 font-semibold hover:underline">
+                            View all ({{ pending_approvals|length }}) &rarr;
+                        </a>
+                    </div>
+
+                    {% if pending_approvals %}
+                        <div class="space-y-3">
+                            {% for req in pending_approvals[:3] %}
+                                <div class="p-3.5 rounded-xl bg-amber-50/50 border border-amber-200/60 flex items-center justify-between text-xs">
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-bold text-slate-900">{{ req.medicine.name }}</span>
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">Qty: {{ req.quantity_requested }}</span>
+                                        </div>
+                                        <p class="text-slate-500 text-[11px] mt-0.5">Patient: {{ req.patient.full_name }} • Requested: {{ req.created_at.strftime('%d %b, %H:%M') }}</p>
+                                    </div>
+                                    <a href="{{ url_for('doctor.dashboard', tab='prescriptions') }}" class="px-3 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-semibold text-[11px] transition">
+                                        Review
+                                    </a>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-xs text-slate-400 py-4 text-center">Prescription approval queue is clear. No pending reviews.</p>
+                    {% endif %}
+                </div>
             </div>
 
-            {% if appointments %}
-                <div class="overflow-x-auto">
-                    <table class="w-full text-xs text-left">
+            <!-- Right: Clinical Quick Actions & Profile -->
+            <div class="lg:col-span-4 space-y-6">
+                <!-- Practice Card -->
+                <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs text-xs">
+                    <span class="text-xs font-bold text-slate-900 block mb-3">Clinical Profile & Hospital</span>
+                    <div class="space-y-2 text-slate-600">
+                        <div class="flex justify-between py-1 border-b border-slate-100">
+                            <span class="text-slate-400">Hospital Affinity:</span>
+                            <span class="font-semibold text-slate-800">{{ doctor.hospital_affinity }}</span>
+                        </div>
+                        <div class="flex justify-between py-1 border-b border-slate-100">
+                            <span class="text-slate-400">Specialty Domain:</span>
+                            <span class="font-semibold text-teal-700">{{ doctor.specialty }}</span>
+                        </div>
+                        <div class="flex justify-between py-1 border-b border-slate-100">
+                            <span class="text-slate-400">Consultation Fee:</span>
+                            <span class="font-semibold text-slate-800">₹{{ doctor.consultation_fee|int }}</span>
+                        </div>
+                        <div class="flex justify-between py-1">
+                            <span class="text-slate-400">Active Shifts:</span>
+                            <span class="font-semibold text-slate-800">{{ availabilities|length }} slots registered</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Patient Feedback Highlight -->
+                <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs text-xs">
+                    <span class="text-xs font-bold text-slate-900 block mb-3">Patient Ratings & Reviews</span>
+                    {% if feedbacks %}
+                        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/60 mb-3 text-center">
+                            <div class="text-2xl font-bold text-slate-900 mb-0.5">{{ doctor.rating }} / 5.0</div>
+                            <div class="text-amber-400 text-xs mb-1">
+                                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star-half-stroke"></i>
+                            </div>
+                            <span class="text-[10px] text-slate-400">Based on {{ feedbacks|length }} verified patient reviews</span>
+                        </div>
+                        <div class="space-y-2">
+                            {% for fb in feedbacks[:2] %}
+                                <div class="p-2.5 rounded-lg bg-slate-50 text-[11px] border border-slate-100">
+                                    <div class="flex justify-between font-semibold text-slate-700 mb-0.5">
+                                        <span>{{ fb.patient_name }}</span>
+                                        <span class="text-amber-500 font-bold">★ {{ fb.rating }}</span>
+                                    </div>
+                                    <p class="text-slate-500 italic">"{{ fb.feedback_text or 'Consultation was helpful.' }}"</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-slate-400 text-center py-4">No patient reviews submitted yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+        {% endif %}
+
+        <!-- TAB 2: PRESCRIPTION APPROVAL QUEUE -->
+        {% if tab == 'prescriptions' %}
+        <div class="space-y-6">
+            <div class="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-xs">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-100 mb-6">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-file-signature text-teal-600"></i> Prescription Verification & Medicine Approval Queue
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Review patient uploaded slips, verify dosages, and grant or reject purchase eligibility.</p>
+                    </div>
+                    <span class="text-xs font-semibold px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                        {{ pending_approvals|length }} Pending Action
+                    </span>
+                </div>
+
+                {% if pending_approvals %}
+                    <div class="space-y-4">
+                        {% for req in pending_approvals %}
+                            <div class="p-5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs">
+                                <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+                                    <div class="space-y-2 flex-grow">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-sm font-bold text-slate-900">{{ req.medicine.name }}</span>
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">
+                                                Requested: {{ req.quantity_requested }} unit(s)
+                                            </span>
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                                                Rx Required
+                                            </span>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-600 text-[11px]">
+                                            <div><strong>Patient Name:</strong> {{ req.patient.full_name }} (ID #{{ req.patient_id }})</div>
+                                            <div><strong>Contact Phone:</strong> {{ req.patient.phone or 'Not provided' }}</div>
+                                            <div><strong>Requested On:</strong> {{ req.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                                            <div><strong>Dosage Info:</strong> {{ req.medicine.dosage or 'Standard' }}</div>
+                                        </div>
+
+                                        {% if req.clinical_notes %}
+                                            <div class="p-2 rounded bg-white border border-slate-200 text-slate-700 text-[11px]">
+                                                <strong>Patient Clinical Reason:</strong> {{ req.clinical_notes }}
+                                            </div>
+                                        {% endif %}
+
+                                        <!-- Associated Prescription Slip & OCR -->
+                                        {% if req.prescription %}
+                                            <div class="p-3 rounded-xl bg-white border border-teal-200 text-[11px] space-y-1">
+                                                <div class="flex items-center justify-between font-semibold text-teal-800">
+                                                    <span><i class="fa-solid fa-paperclip mr-1"></i> Attached Prescription File: {{ req.prescription.filename }}</span>
+                                                    <a href="{{ url_for('prescription.view_file', rx_id=req.prescription.id) }}" target="_blank" class="px-2.5 py-1 rounded bg-teal-50 hover:bg-teal-100 text-teal-700 font-bold transition">
+                                                        <i class="fa-solid fa-arrow-up-right-from-square mr-1"></i> Open Slip
+                                                    </a>
+                                                </div>
+                                                {% if req.prescription.raw_ocr_text %}
+                                                    <p class="text-slate-500 font-mono text-[10px] bg-slate-50 p-2 rounded border border-slate-100 truncate">
+                                                        OCR Text: {{ req.prescription.raw_ocr_text }}
+                                                    </p>
+                                                {% endif %}
+                                            </div>
+                                        {% else %}
+                                            <p class="text-amber-700 text-[11px] italic">No digital slip uploaded. Request based on patient clinical statement.</p>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Decision Action Forms -->
+                                    <div class="flex flex-col gap-2 shrink-0 lg:w-72 border-t lg:border-t-0 lg:border-l border-slate-200 pt-3 lg:pt-0 lg:pl-4">
+                                        <!-- Approve Form -->
+                                        <form action="{{ url_for('doctor.review_prescription_request', req_id=req.id) }}" method="POST" class="space-y-2">
+                                            <input type="hidden" name="decision" value="APPROVE">
+                                            <div class="flex items-center gap-2">
+                                                <label class="text-[10px] font-semibold text-slate-500">Qty Approved:</label>
+                                                <input type="number" name="quantity_approved" value="{{ req.quantity_requested }}" min="1" max="100" class="w-16 px-2 py-1 bg-white border border-slate-200 rounded text-center text-xs">
+                                                <label class="text-[10px] font-semibold text-slate-500">Valid (Days):</label>
+                                                <input type="number" name="valid_days" value="30" min="1" max="180" class="w-16 px-2 py-1 bg-white border border-slate-200 rounded text-center text-xs">
+                                            </div>
+                                            <button type="submit" class="w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition shadow-xs">
+                                                <i class="fa-solid fa-check mr-1"></i> Approve Prescription
+                                            </button>
+                                        </form>
+
+                                        <!-- Reject Form -->
+                                        <form action="{{ url_for('doctor.review_prescription_request', req_id=req.id) }}" method="POST" class="space-y-2 pt-2 border-t border-slate-200">
+                                            <input type="hidden" name="decision" value="REJECT">
+                                            <input type="text" name="rejection_reason" required placeholder="Reason for clinical rejection..." class="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded text-xs">
+                                            <button type="submit" onclick="return confirm('Reject this prescription request?')" class="w-full py-1.5 rounded-lg bg-white border border-rose-300 hover:bg-rose-50 text-rose-700 font-semibold text-xs transition">
+                                                <i class="fa-solid fa-xmark mr-1"></i> Reject Request
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="py-12 text-center text-slate-400 text-xs">
+                        <i class="fa-solid fa-circle-check text-4xl mb-2 text-emerald-500 block"></i>
+                        No pending prescription approval requests.
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Decision History -->
+            {% if reviewed_approvals %}
+                <div class="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-xs">
+                    <h3 class="text-sm font-bold text-slate-900 mb-3">Recently Reviewed Approvals History</h3>
+                    <div class="overflow-x-auto text-xs">
+                        <table class="w-full text-left">
+                            <thead class="text-slate-400 text-[11px] border-b border-slate-100">
+                                <tr>
+                                    <th class="pb-2">Medication</th>
+                                    <th class="pb-2">Patient</th>
+                                    <th class="pb-2">Decision</th>
+                                    <th class="pb-2">Approved Qty</th>
+                                    <th class="pb-2">Valid Until</th>
+                                    <th class="pb-2">Decision Date</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-slate-700">
+                                {% for rev in reviewed_approvals %}
+                                    <tr>
+                                        <td class="py-2.5 font-bold text-slate-900">{{ rev.medicine.name }}</td>
+                                        <td class="py-2.5">{{ rev.patient.full_name }}</td>
+                                        <td class="py-2.5">
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-bold {% if rev.status == 'APPROVED' %}bg-emerald-50 text-emerald-800{% else %}bg-rose-50 text-rose-800{% endif %}">
+                                                {{ rev.status }}
+                                            </span>
+                                        </td>
+                                        <td class="py-2.5 font-mono">{{ rev.quantity_approved or rev.quantity_requested }}</td>
+                                        <td class="py-2.5 text-slate-500">{{ rev.valid_until.strftime('%Y-%m-%d') if rev.valid_until else 'N/A' }}</td>
+                                        <td class="py-2.5 text-slate-400 text-[11px]">{{ rev.decision_timestamp.strftime('%Y-%m-%d %H:%M') if rev.decision_timestamp else '' }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- TAB 3: ALL APPOINTMENTS WITH FILTERS -->
+        {% if tab == 'appointments' %}
+        <div class="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-xs">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 mb-6">
+                <div>
+                    <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-days text-teal-600"></i> Consultations Directory
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Filter patient appointments by schedule status and outcome.</p>
+                </div>
+
+                <!-- Status Filter Buttons -->
+                <div class="flex flex-wrap gap-1.5 text-xs">
+                    <a href="{{ url_for('doctor.dashboard', tab='appointments', filter='all') }}" class="px-3 py-1 rounded-lg font-medium transition {% if app_filter == 'all' %}bg-slate-900 text-white{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">
+                        All ({{ filtered_appointments|length if app_filter == 'all' else '' }})
+                    </a>
+                    <a href="{{ url_for('doctor.dashboard', tab='appointments', filter='today') }}" class="px-3 py-1 rounded-lg font-medium transition {% if app_filter == 'today' %}bg-slate-900 text-white{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">
+                        Today ({{ today_appointments|length }})
+                    </a>
+                    <a href="{{ url_for('doctor.dashboard', tab='appointments', filter='upcoming') }}" class="px-3 py-1 rounded-lg font-medium transition {% if app_filter == 'upcoming' %}bg-slate-900 text-white{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">
+                        Upcoming ({{ upcoming|length }})
+                    </a>
+                    <a href="{{ url_for('doctor.dashboard', tab='appointments', filter='completed') }}" class="px-3 py-1 rounded-lg font-medium transition {% if app_filter == 'completed' %}bg-slate-900 text-white{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">
+                        Completed ({{ completed|length }})
+                    </a>
+                    <a href="{{ url_for('doctor.dashboard', tab='appointments', filter='cancelled') }}" class="px-3 py-1 rounded-lg font-medium transition {% if app_filter == 'cancelled' %}bg-slate-900 text-white{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">
+                        Cancelled ({{ cancelled|length }})
+                    </a>
+                </div>
+            </div>
+
+            {% if filtered_appointments %}
+                <div class="overflow-x-auto text-xs">
+                    <table class="w-full text-left">
                         <thead class="text-[11px] text-slate-400 font-medium border-b border-slate-100">
                             <tr>
-                                <th class="pb-2.5 font-medium">Patient Name</th>
-                                <th class="pb-2.5 font-medium">Contact</th>
-                                <th class="pb-2.5 font-medium">Date & Slot</th>
-                                <th class="pb-2.5 font-medium">Reported Symptoms</th>
-                                <th class="pb-2.5 font-medium">Status</th>
-                                <th class="pb-2.5 text-right font-medium">Action</th>
+                                <th class="pb-2.5">Patient Details</th>
+                                <th class="pb-2.5">Date & Slot</th>
+                                <th class="pb-2.5">Chief Complaint</th>
+                                <th class="pb-2.5">Status</th>
+                                <th class="pb-2.5 text-right">Clinical Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 text-slate-700">
-                            {% for app in appointments %}
-                                <tr>
-                                    <td class="py-3 font-semibold text-slate-900">{{ app.patient_name }}</td>
-                                    <td class="py-3 font-mono text-slate-600">{{ app.patient_phone }}</td>
-                                    <td class="py-3 font-medium text-teal-700">{{ app.appointment_date }} @ {{ app.time_slot }}</td>
-                                    <td class="py-3 max-w-[220px] text-slate-600 truncate">{{ app.problem_description }}</td>
+                            {% for app in filtered_appointments %}
+                                <tr class="hover:bg-slate-50/70 transition">
+                                    <td class="py-3 font-semibold text-slate-900">
+                                        {{ app.patient_name }}
+                                        <span class="block text-[11px] text-slate-400 font-mono font-normal">{{ app.patient_phone }}</span>
+                                    </td>
+                                    <td class="py-3 font-medium text-teal-700">
+                                        {{ app.appointment_date }}
+                                        <span class="block text-[10px] text-slate-500 font-normal">@ {{ app.time_slot }}</span>
+                                    </td>
+                                    <td class="py-3 max-w-[220px] truncate text-slate-600">{{ app.problem_description }}</td>
                                     <td class="py-3">
                                         <span class="px-2 py-0.5 rounded text-[10px] font-semibold 
                                             {% if app.status == 'CONFIRMED' %} bg-teal-50 text-teal-800 border border-teal-200
@@ -64,16 +426,17 @@
                                             {{ app.status }}
                                         </span>
                                     </td>
-                                    <td class="py-3 text-right">
-                                        {% if app.status != 'COMPLETED' %}
-                                            <form action="{{ url_for('doctor.update_appointment', app_id=app.id) }}" method="POST" class="inline-flex">
+                                    <td class="py-3 text-right space-x-1">
+                                        <button onclick="openNoteModal('{{ app.id }}', '{{ app.patient_name }}', '{{ app.problem_description }}')" class="px-2.5 py-1 rounded bg-teal-50 hover:bg-teal-600 text-teal-700 hover:text-white font-medium text-[11px] transition">
+                                            <i class="fa-solid fa-notes-medical mr-1"></i> Notes
+                                        </button>
+                                        {% if app.status == 'CONFIRMED' %}
+                                            <form action="{{ url_for('doctor.update_appointment', app_id=app.id) }}" method="POST" class="inline">
                                                 <input type="hidden" name="status" value="COMPLETED">
-                                                <button type="submit" class="px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-medium text-[11px] transition shadow-xs">
+                                                <button type="submit" class="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-[11px] transition shadow-xs">
                                                     Mark Completed
                                                 </button>
                                             </form>
-                                        {% else %}
-                                            <span class="text-[11px] text-slate-400 italic">Finished</span>
                                         {% endif %}
                                     </td>
                                 </tr>
@@ -82,12 +445,235 @@
                     </table>
                 </div>
             {% else %}
-                <div class="text-center py-12 text-slate-400 text-xs">
-                    No consultation requests assigned at this time.
+                <div class="py-12 text-center text-slate-400 text-xs">
+                    No appointments matching the selected filter.
                 </div>
             {% endif %}
         </div>
+        {% endif %}
+
+        <!-- TAB 4: CLINICAL NOTES & PATIENT FEEDBACK -->
+        {% if tab == 'notes' %}
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Recorded Notes -->
+            <div class="lg:col-span-8 bg-white rounded-2xl border border-slate-200/90 p-6 shadow-xs space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-book-medical text-teal-600"></i> Recorded Clinical Notes Log
+                    </h2>
+                    <span class="text-xs text-slate-400">{{ clinical_notes|length }} Record(s)</span>
+                </div>
+
+                {% if clinical_notes %}
+                    <div class="space-y-4">
+                        {% for n in clinical_notes %}
+                            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-xs space-y-2">
+                                <div class="flex justify-between items-center pb-2 border-b border-slate-200/60">
+                                    <div>
+                                        <span class="font-bold text-slate-900">Patient: {{ n.appointment.patient_name }}</span>
+                                        <span class="text-slate-400 text-[11px] ml-2 font-mono">Appt #{{ n.appointment_id }} • {{ n.appointment.appointment_date }}</span>
+                                    </div>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-semibold {% if n.is_shared_with_patient %}bg-teal-50 text-teal-700 border border-teal-200{% else %}bg-slate-200 text-slate-600{% endif %}">
+                                        {{ 'Shared with Patient' if n.is_shared_with_patient else 'Private Clinical Only' }}
+                                    </span>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px]">
+                                    <div>
+                                        <strong class="text-slate-700 block">Assessment:</strong>
+                                        <p class="text-slate-600">{{ n.clinical_assessment or 'No formal assessment entered.' }}</p>
+                                    </div>
+                                    <div>
+                                        <strong class="text-slate-700 block">Observations & Symptoms:</strong>
+                                        <p class="text-slate-600">{{ n.symptoms_observations or 'None recorded.' }}</p>
+                                    </div>
+                                </div>
+
+                                {% if n.patient_advice %}
+                                    <div class="p-2.5 rounded-lg bg-teal-50/50 border border-teal-100 text-[11px]">
+                                        <strong class="text-teal-900 block"><i class="fa-solid fa-comment-medical mr-1"></i> Patient Advice:</strong>
+                                        <p class="text-teal-800">{{ n.patient_advice }}</p>
+                                        {% if n.recommended_followup %}
+                                            <p class="text-teal-700 text-[10px] mt-1"><strong>Follow-up:</strong> {{ n.recommended_followup }} (Date: {{ n.followup_date or 'TBD' }})</p>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-xs text-slate-400 py-8 text-center">No clinical consultation notes recorded yet.</p>
+                {% endif %}
+            </div>
+
+            <!-- Feedbacks Sidebar -->
+            <div class="lg:col-span-4 bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs text-xs space-y-4">
+                <h3 class="text-xs font-bold text-slate-900 pb-2 border-b border-slate-100">Patient Feedback Received</h3>
+                {% if feedbacks %}
+                    <div class="space-y-3">
+                        {% for fb in feedbacks %}
+                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="font-bold text-slate-800">{{ fb.patient_name }}</span>
+                                    <span class="text-amber-500 font-bold">★ {{ fb.rating }}</span>
+                                </div>
+                                <p class="text-slate-600 text-[11px] italic">"{{ fb.feedback_text or 'Great clinical experience.' }}"</p>
+                                <span class="text-[9px] text-slate-400 mt-1 block">{{ fb.created_at.strftime('%Y-%m-%d') }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-slate-400 text-center py-6">No patient reviews submitted yet.</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- TAB 5: AVAILABILITY SETTINGS -->
+        {% if tab == 'availability' %}
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Add Slot -->
+            <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 p-6 shadow-xs text-xs">
+                <h3 class="text-sm font-bold text-slate-900 mb-2">Register Consultation Availability</h3>
+                <p class="text-slate-500 text-[11px] mb-4">Set weekly clinic slots to prevent double-booking conflicts.</p>
+
+                <form action="{{ url_for('doctor.save_availability') }}" method="POST" class="space-y-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Day of Week</label>
+                        <select name="day_of_week" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900">
+                            <option value="Monday">Monday</option>
+                            <option value="Tuesday">Tuesday</option>
+                            <option value="Wednesday">Wednesday</option>
+                            <option value="Thursday">Thursday</option>
+                            <option value="Friday">Friday</option>
+                            <option value="Saturday">Saturday</option>
+                            <option value="Sunday">Sunday</option>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Start Time (HH:MM)</label>
+                            <input type="text" name="start_time" required placeholder="09:00" value="09:00" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">End Time (HH:MM)</label>
+                            <input type="text" name="end_time" required placeholder="13:00" value="13:00" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs transition shadow-xs mt-2">
+                        Add Availability Slot
+                    </button>
+                </form>
+            </div>
+
+            <!-- Existing Slots -->
+            <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200/90 p-6 shadow-xs text-xs">
+                <h3 class="text-sm font-bold text-slate-900 mb-4">Configured Clinic Consultation Slots</h3>
+                {% if availabilities %}
+                    <div class="space-y-2.5">
+                        {% for slot in availabilities %}
+                            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-24 font-bold text-slate-900">{{ slot.day_of_week }}</span>
+                                    <span class="font-mono text-teal-700 bg-white px-2.5 py-1 rounded border border-slate-200 font-semibold">
+                                        {{ slot.start_time }} - {{ slot.end_time }}
+                                    </span>
+                                </div>
+                                <form action="{{ url_for('doctor.delete_availability', slot_id=slot.id) }}" method="POST" class="inline">
+                                    <button type="submit" onclick="return confirm('Remove slot?')" class="text-rose-600 hover:underline text-[11px] font-medium">
+                                        Remove
+                                    </button>
+                                </form>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-slate-400 text-center py-8">No availability slots configured yet.</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
 
     </div>
-</section>
+</div>
+
+<!-- Modal: Clinical Consultation Notes Entry -->
+<div id="note-modal" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-6 sm:p-8 max-w-xl w-full shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+            <h3 class="text-base font-bold text-slate-900" id="modal-patient-title">Record Clinical Notes</h3>
+            <button type="button" onclick="closeNoteModal()" class="text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <form id="note-form" method="POST" class="space-y-3.5 text-xs">
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-slate-600" id="modal-patient-info">
+                Loading appointment info...
+            </div>
+
+            <div>
+                <label class="block font-semibold text-slate-700 mb-1">Clinical Assessment / Findings (Private):</label>
+                <textarea name="clinical_assessment" rows="2" placeholder="e.g. Acute upper respiratory tract infection, vitals stable" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></textarea>
+            </div>
+
+            <div>
+                <label class="block font-semibold text-slate-700 mb-1">Symptoms & Clinical Observations (Private):</label>
+                <textarea name="symptoms_observations" rows="2" placeholder="e.g. Mild wheezing, fever since 2 days" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl"></textarea>
+            </div>
+
+            <div class="pt-2 border-t border-slate-100">
+                <label class="block font-semibold text-teal-800 mb-1">Patient-Facing Advice & Next Steps (Shareable):</label>
+                <textarea name="patient_advice" rows="2" placeholder="e.g. Drink warm fluids, complete antibiotic course, rest for 48 hours" class="w-full px-3 py-2 bg-white border border-teal-200 rounded-xl"></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Follow-up Recommendation:</label>
+                    <input type="text" name="recommended_followup" placeholder="e.g. Review if fever persists" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Follow-up Date:</label>
+                    <input type="date" name="followup_date" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl">
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 pt-2">
+                <input type="checkbox" id="is_shared" name="is_shared_with_patient" checked class="rounded border-slate-300 text-teal-600 focus:ring-teal-500">
+                <label for="is_shared" class="text-slate-700 font-medium">Share summary advice with patient in their dashboard</label>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <input type="checkbox" id="mark_completed" name="mark_completed" checked class="rounded border-slate-300 text-teal-600 focus:ring-teal-500">
+                <label for="mark_completed" class="text-slate-700 font-medium">Mark appointment status as COMPLETED</label>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <button type="button" onclick="closeNoteModal()" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-semibold">
+                    Cancel
+                </button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold transition shadow-xs">
+                    Save Notes Securely
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openNoteModal(appId, patientName, complaint) {
+    const modal = document.getElementById('note-modal');
+    const form = document.getElementById('note-form');
+    form.action = `/doctor/appointment/${appId}/notes`;
+    document.getElementById('modal-patient-title').innerText = `Clinical Consultation: ${patientName}`;
+    document.getElementById('modal-patient-info').innerHTML = `<strong>Patient:</strong> ${patientName} &bull; <strong>Complaint:</strong> ${complaint}`;
+    modal.classList.remove('hidden');
+}
+
+function closeNoteModal() {
+    document.getElementById('note-modal').classList.add('hidden');
+}
+</script>
 {% endblock %}

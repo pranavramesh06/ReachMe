@@ -2,75 +2,122 @@
 
 {% block title %}Emergency Ambulance Request — ReachMe{% endblock %}
 
+{% block extra_head %}
+<!-- Leaflet CSS for Interactive OpenStreetMap -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<style>
+    #emergency-map {
+        height: 340px;
+        width: 100%;
+        border-radius: 0.75rem;
+        z-index: 1;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <section class="py-12 sm:py-16">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
         
-        <div class="max-w-xl mb-8">
-            <span class="text-xs font-bold text-rose-600 uppercase tracking-wider block mb-1">Emergency Dispatch</span>
-            <h1 class="text-3xl font-bold tracking-tight text-slate-900">Request Ambulance Dispatch</h1>
+        <div class="max-w-2xl mb-8">
+            <span class="text-xs font-bold text-rose-600 uppercase tracking-wider block mb-1">Simulated Emergency Dispatch</span>
+            <h1 class="text-3xl font-bold tracking-tight text-slate-900">Emergency Ambulance Allocation</h1>
             <p class="text-xs sm:text-sm text-slate-500 mt-1">
-                Simulated emergency dispatch system with GPS coordinate detection.
+                Real-time Haversine distance nearest-unit allocation across our simulated Chennai response fleet.
             </p>
-            <div class="mt-3 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[11px] inline-flex items-center gap-2">
-                <i class="fa-solid fa-triangle-exclamation text-rose-600"></i>
-                <span>Simulation Demo: For real-world emergencies, immediately call 108 or 911.</span>
+            <div class="mt-3 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-[11px] flex items-center gap-2">
+                <i class="fa-solid fa-triangle-exclamation text-rose-600 shrink-0 text-sm"></i>
+                <span><strong>Simulated Dispatch Demo:</strong> This demonstration does not contact municipal emergency services or dispatch a physical ambulance. For real medical emergencies, immediately dial 108 or 911.</span>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
-            <!-- Request Form -->
-            <div class="lg:col-span-6">
+            <!-- Request Form & Coordinates Selection -->
+            <div class="lg:col-span-5 space-y-6">
                 <div class="clean-card rounded-2xl p-6">
                     <h2 class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
                         <i class="fa-solid fa-truck-medical text-rose-600"></i> Dispatch Details
                     </h2>
 
                     <form id="ambulance-form" class="space-y-3.5 text-xs">
+                        <input type="hidden" id="geo-lat" name="latitude" value="13.0827">
+                        <input type="hidden" id="geo-lng" name="longitude" value="80.2707">
+
                         <div>
                             <label class="block font-semibold text-slate-700 mb-1">Patient / Caller Name</label>
-                            <input type="text" id="amb-name" name="name" required value="{{ current_user.full_name if current_user else '' }}" placeholder="Enter caller name" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-rose-500">
+                            <input type="text" id="amb-name" name="name" required value="{{ current_user.full_name if current_user else '' }}" placeholder="Caller name" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-rose-500">
                         </div>
 
                         <div>
-                            <label class="block font-semibold text-slate-700 mb-1">Phone Number</label>
+                            <label class="block font-semibold text-slate-700 mb-1">Contact Phone Number</label>
                             <input type="tel" id="amb-phone" name="phone" required value="{{ current_user.phone if current_user else '' }}" placeholder="+91 98765 43210" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-rose-500">
                         </div>
 
                         <div>
-                            <label class="block font-semibold text-slate-700 mb-1">Emergency Situation</label>
-                            <input type="text" id="amb-emergency" name="emergency" required placeholder="e.g. Chest discomfort, severe trauma, breathing difficulty" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-rose-500">
+                            <label class="block font-semibold text-slate-700 mb-1">Emergency Medical Condition</label>
+                            <input type="text" id="amb-emergency" name="emergency" required placeholder="e.g. Severe chest pain / acute cardiac trauma" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:border-rose-500">
                         </div>
 
                         <div>
-                            <label class="block font-semibold text-slate-700 mb-1">Location Coordinates / Address</label>
-                            <div class="relative">
-                                <input type="text" id="amb-location" name="location" required placeholder="Detecting GPS..." class="w-full pl-3 pr-16 py-2 bg-white border border-slate-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:border-rose-500">
-                                <button type="button" onclick="detectGPS()" class="absolute right-1 top-1 bottom-1 px-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-semibold">
-                                    GPS
+                            <label class="block font-semibold text-slate-700 mb-1">Patient Location Coordinates / Sector</label>
+                            <div class="relative mb-1.5">
+                                <input type="text" id="amb-location" name="location" required value="Chennai Central (13.0827, 80.2707)" placeholder="GPS coordinates or landmark..." class="w-full pl-3 pr-20 py-2 bg-white border border-slate-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:border-rose-500">
+                                <button type="button" onclick="detectGPS()" class="absolute right-1 top-1 bottom-1 px-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-[11px] font-bold transition">
+                                    <i class="fa-solid fa-location-crosshairs mr-1"></i> GPS
                                 </button>
+                            </div>
+                            
+                            <!-- Quick manual demo location picker -->
+                            <div class="flex flex-wrap gap-1 text-[10px] text-slate-500 items-center">
+                                <span class="font-semibold text-slate-600">Preset Sectors:</span>
+                                <button type="button" onclick="setDemoLoc(13.0827, 80.2707, 'Chennai Central')" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700">Central</button>
+                                <button type="button" onclick="setDemoLoc(13.0850, 80.2101, 'Anna Nagar West')" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700">Anna Nagar</button>
+                                <button type="button" onclick="setDemoLoc(13.0012, 80.2565, 'Adyar Bridge')" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700">Adyar</button>
+                                <button type="button" onclick="setDemoLoc(12.9249, 80.1000, 'Tambaram Sanatorium')" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700">Tambaram</button>
                             </div>
                         </div>
 
-                        <button type="submit" class="w-full py-2.5 rounded-xl font-semibold text-white bg-rose-600 hover:bg-rose-700 transition shadow-sm text-xs">
-                            Submit Emergency Request
+                        <div id="gps-status-notice" class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-[11px] flex items-center justify-between">
+                            <span><i class="fa-solid fa-satellite-dish text-teal-600 mr-1"></i> Coords: <strong id="coords-display">13.0827, 80.2707</strong></span>
+                            <span class="text-teal-700 font-semibold text-[10px]">Ready</span>
+                        </div>
+
+                        <button type="submit" id="submit-btn" class="w-full py-2.5 rounded-xl font-bold text-white bg-rose-600 hover:bg-rose-700 transition shadow-sm text-xs">
+                            <i class="fa-solid fa-bell mr-1"></i> Allocate Nearest Ambulance
                         </button>
                     </form>
                 </div>
             </div>
 
-            <!-- Live Status Tracker -->
-            <div class="lg:col-span-6">
-                <div class="clean-card rounded-2xl p-6 min-h-[280px]">
+            <!-- Right: Interactive Leaflet Map & Live Allocation Tracker -->
+            <div class="lg:col-span-7 space-y-6">
+                <!-- Map Container -->
+                <div class="clean-card rounded-2xl p-4">
+                    <div class="flex items-center justify-between pb-2.5 mb-3 border-b border-slate-100 text-xs">
+                        <span class="font-bold text-slate-900 flex items-center gap-1.5">
+                            <i class="fa-solid fa-map-location-dot text-rose-600"></i> Interactive Dispatch Fleet Map
+                        </span>
+                        <div class="flex items-center gap-3 text-[10px]">
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-rose-600 inline-block"></span> Patient</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-600 inline-block"></span> Assigned Unit</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-slate-400 inline-block"></span> Fleet Hub</span>
+                        </div>
+                    </div>
+
+                    <div id="emergency-map"></div>
+                </div>
+
+                <!-- Live Status & Simulation Timeline -->
+                <div class="clean-card rounded-2xl p-6">
                     <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-                        <span class="text-xs font-bold text-slate-900">Live Status Tracker</span>
-                        <span id="amb-status-badge" class="hidden text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">REQUESTED</span>
+                        <span class="text-xs font-bold text-slate-900">Allocation Telemetry & Tracking</span>
+                        <span id="amb-status-badge" class="hidden text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">REQUESTED</span>
                     </div>
 
                     <div id="amb-tracking-content" class="text-xs text-slate-500">
-                        <div class="p-8 text-center text-slate-400">
-                            Submit the dispatch form to simulate live ambulance tracking and ETA estimation.
+                        <div class="p-6 text-center text-slate-400">
+                            Submit your location above to calculate Haversine distance, locate the nearest available ambulance, and simulate live dispatch.
                         </div>
                     </div>
                 </div>
@@ -83,70 +130,236 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
-function detectGPS() {
-    const locInput = document.getElementById('amb-location');
-    locInput.value = "Detecting GPS...";
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(pos) {
-            locInput.value = `Lat: ${pos.coords.latitude.toFixed(4)}, Long: ${pos.coords.longitude.toFixed(4)} (GPS)`;
-        }, function(err) {
-            locInput.value = "VIT Vellore Campus Health Center, Tamil Nadu";
+let map;
+let patientMarker;
+let assignedMarker;
+let fleetMarkers = [];
+let connectorLine;
+let activePollingInterval = null;
+
+// Initial Chennai coordinates
+let currentLat = 13.0827;
+let currentLng = 80.2707;
+
+function initMap() {
+    map = L.map('emergency-map').setView([currentLat, currentLng], 12);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    patientMarker = L.circleMarker([currentLat, currentLng], {
+        radius: 8,
+        color: '#e11d48',
+        fillColor: '#f43f5e',
+        fillOpacity: 0.9
+    }).addTo(map).bindPopup('<strong>Reported Patient Location</strong>');
+
+    loadSimulatedFleet();
+}
+
+async function loadSimulatedFleet() {
+    try {
+        const res = await fetch('/api/fleet');
+        const fleet = await res.json();
+        fleetMarkers.forEach(m => map.removeLayer(m));
+        fleetMarkers = [];
+
+        fleet.forEach(amb => {
+            const marker = L.circleMarker([amb.latitude, amb.longitude], {
+                radius: 6,
+                color: amb.status === 'AVAILABLE' ? '#10b981' : '#64748b',
+                fillColor: amb.status === 'AVAILABLE' ? '#34d399' : '#94a3b8',
+                fillOpacity: 0.8
+            }).addTo(map).bindPopup(`<strong>${amb.vehicle_identifier}</strong><br>${amb.base_location_name}<br>Status: ${amb.status}`);
+            fleetMarkers.push(marker);
         });
-    } else {
-        locInput.value = "VIT Vellore Campus Health Center, Tamil Nadu";
+    } catch (e) {
+        console.error("Failed to load fleet markers:", e);
     }
 }
-window.onload = detectGPS;
+
+function setDemoLoc(lat, lng, name) {
+    currentLat = lat;
+    currentLng = lng;
+    document.getElementById('geo-lat').value = lat;
+    document.getElementById('geo-lng').value = lng;
+    document.getElementById('amb-location').value = `${name} (${lat}, ${lng})`;
+    document.getElementById('coords-display').innerText = `${lat}, ${lng}`;
+
+    if (patientMarker) {
+        patientMarker.setLatLng([lat, lng]);
+        map.panTo([lat, lng]);
+    }
+}
+
+function detectGPS() {
+    const locNotice = document.getElementById('gps-status-notice');
+    locNotice.innerHTML = '<span><i class="fa-solid fa-spinner fa-spin mr-1"></i> Requesting GPS permission...</span>';
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(pos) {
+            currentLat = parseFloat(pos.coords.latitude.toFixed(4));
+            currentLng = parseFloat(pos.coords.longitude.toFixed(4));
+            document.getElementById('geo-lat').value = currentLat;
+            document.getElementById('geo-lng').value = currentLng;
+            document.getElementById('amb-location').value = `GPS: Lat ${currentLat}, Long ${currentLng}`;
+            document.getElementById('coords-display').innerText = `${currentLat}, ${currentLng}`;
+            locNotice.innerHTML = `<span><i class="fa-solid fa-satellite-dish text-emerald-600 mr-1"></i> Coords: <strong id="coords-display">${currentLat}, ${currentLng}</strong></span><span class="text-emerald-700 font-semibold text-[10px]">GPS Locked</span>`;
+
+            if (patientMarker) {
+                patientMarker.setLatLng([currentLat, currentLng]);
+                map.setView([currentLat, currentLng], 13);
+            }
+        }, function(err) {
+            locNotice.innerHTML = `<span><i class="fa-solid fa-circle-exclamation text-amber-600 mr-1"></i> GPS permission denied. Using manual fallback: <strong>Chennai Central</strong></span>`;
+            setDemoLoc(13.0827, 80.2707, 'Chennai Central');
+        }, { timeout: 8000 });
+    } else {
+        setDemoLoc(13.0827, 80.2707, 'Chennai Central');
+    }
+}
 
 document.getElementById('ambulance-form').addEventListener('submit', async function(e) {
     e.preventDefault();
     const trackingBox = document.getElementById('amb-tracking-content');
     const badge = document.getElementById('amb-status-badge');
+    const btn = document.getElementById('submit-btn');
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Calculating Nearest Unit...';
 
     const name = document.getElementById('amb-name').value;
     const phone = document.getElementById('amb-phone').value;
     const emergency = document.getElementById('amb-emergency').value;
     const location = document.getElementById('amb-location').value;
-
-    trackingBox.innerHTML = '<div class="text-center py-6 text-slate-500 font-mono text-xs">Connecting to emergency dispatch database...</div>';
+    const latitude = parseFloat(document.getElementById('geo-lat').value);
+    const longitude = parseFloat(document.getElementById('geo-lng').value);
 
     try {
         const response = await fetch('/submitAmbulanceRequest', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ name, phone, emergency, location })
+            body: JSON.stringify({ name, phone, emergency, location, latitude, longitude })
         });
         const data = await response.json();
+
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-bell mr-1"></i> Allocate Nearest Ambulance';
+
+        if (data.no_ambulance_available) {
+            badge.classList.remove('hidden');
+            badge.textContent = 'NO UNIT AVAILABLE';
+            badge.className = 'text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200';
+            trackingBox.innerHTML = `
+                <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 space-y-2">
+                    <strong class="block font-bold">${data.message}</strong>
+                    <p class="text-[11px]">${data.disclaimer}</p>
+                </div>
+            `;
+            return;
+        }
 
         if (response.ok && data.success) {
             badge.classList.remove('hidden');
             badge.textContent = data.status;
+            badge.className = 'text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200';
+
+            // Draw on map: Patient marker & Assigned Ambulance marker + straight-line connector
+            if (assignedMarker) map.removeLayer(assignedMarker);
+            if (connectorLine) map.removeLayer(connectorLine);
+
+            assignedMarker = L.circleMarker([data.ambulance_lat, data.ambulance_lng], {
+                radius: 10,
+                color: '#059669',
+                fillColor: '#10b981',
+                fillOpacity: 1.0
+            }).addTo(map).bindPopup(`<strong>Allocated: ${data.assigned_vehicle}</strong><br>ETA: ~${data.eta_minutes} mins`);
+
+            // Straight line connector labelled clearly as straight-line estimate
+            connectorLine = L.polyline([
+                [data.patient_lat, data.patient_lng],
+                [data.ambulance_lat, data.ambulance_lng]
+            ], {
+                color: '#e11d48',
+                dashArray: '6, 8',
+                weight: 2
+            }).addTo(map);
+
+            // Fit map bounds to show both patient and assigned ambulance
+            map.fitBounds([
+                [data.patient_lat, data.patient_lng],
+                [data.ambulance_lat, data.ambulance_lng]
+            ], { padding: [40, 40] });
 
             trackingBox.innerHTML = `
-                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2.5">
-                    <div class="flex justify-between items-center text-xs">
-                        <span class="text-slate-500">Assigned Unit:</span>
-                        <span class="font-bold text-slate-900">${data.vehicle}</span>
+                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
+                    <div class="flex justify-between items-center text-xs pb-2 border-b border-slate-200">
+                        <div>
+                            <span class="text-slate-400 block text-[10px]">Assigned Emergency Unit:</span>
+                            <span class="font-bold text-slate-900 text-sm">${data.assigned_vehicle}</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-slate-400 block text-[10px]">Estimated Travel Time:</span>
+                            <span class="font-bold text-rose-600 font-mono text-sm" id="live-eta">~${data.eta_minutes} Mins</span>
+                        </div>
                     </div>
-                    <div class="flex justify-between items-center text-xs">
-                        <span class="text-slate-500">Estimated Arrival:</span>
-                        <span class="font-bold text-rose-600 font-mono">~${data.eta_minutes} Minutes</span>
+
+                    <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-600">
+                        <div><strong>Haversine Distance:</strong> ${data.distance_km} km</div>
+                        <div><strong>Status:</strong> <span id="live-status" class="font-bold text-teal-700">${data.status}</span></div>
                     </div>
-                    <p class="text-[11px] text-slate-600 pt-2 border-t border-slate-200/60 leading-relaxed">
+
+                    <div class="p-2.5 rounded-lg bg-teal-50 border border-teal-100 text-[11px] text-teal-900">
                         ${data.message}
-                    </p>
-                    <span class="text-[10px] text-slate-400 block pt-1 italic">
+                    </div>
+
+                    <p class="text-[10px] text-slate-400 italic pt-1">
                         ${data.disclaimer}
-                    </span>
+                    </p>
                 </div>
             `;
+
+            // Poll live simulation status
+            if (activePollingInterval) clearInterval(activePollingInterval);
+            activePollingInterval = setInterval(() => pollAmbulanceStatus(data.request_id), 5000);
         } else {
-            trackingBox.innerHTML = `<div class="text-rose-600 text-xs">${data.error || 'Request failed.'}</div>`;
+            trackingBox.innerHTML = `<div class="text-rose-600 text-xs">${data.error || 'Request submission failed.'}</div>`;
         }
     } catch (err) {
+        btn.disabled = false;
         trackingBox.innerHTML = `<div class="text-rose-600 text-xs">Network error: ${err.message}</div>`;
     }
 });
+
+async function pollAmbulanceStatus(requestId) {
+    try {
+        const res = await fetch(`/ambulance/status/${requestId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+
+        const badge = document.getElementById('amb-status-badge');
+        const statusEl = document.getElementById('live-status');
+        const etaEl = document.getElementById('live-eta');
+
+        if (statusEl) statusEl.innerText = data.status;
+        if (etaEl) etaEl.innerText = `~${data.eta_minutes} Mins`;
+        if (badge) badge.innerText = data.status;
+
+        if (data.status === 'ARRIVED') {
+            badge.className = 'text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300';
+            if (activePollingInterval) clearInterval(activePollingInterval);
+        }
+    } catch (e) {
+        console.warn("Status poll error:", e);
+    }
+}
+
+window.onload = function() {
+    initMap();
+};
 </script>
 {% endblock %}

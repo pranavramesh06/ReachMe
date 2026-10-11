@@ -16,6 +16,18 @@ def index():
         featured_medicines=featured_medicines
     )
 
+@main_bp.route('/dashboard')
+def dashboard():
+    from flask import session
+    role = session.get('user_role')
+    if role == 'DOCTOR':
+        return redirect(url_for('doctor.dashboard'))
+    elif role == 'ADMIN':
+        return redirect(url_for('admin.dashboard'))
+    elif 'user_id' in session:
+        return redirect(url_for('patient.dashboard'))
+    return redirect(url_for('auth.login', next='/dashboard'))
+
 @main_bp.route('/about-us')
 def about_us():
     return render_template('about-us.html')

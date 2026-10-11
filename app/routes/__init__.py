@@ -3,9 +3,9 @@ from flask import Blueprint
 # Centralized route blueprints
 main_bp = Blueprint('main', __name__)
 auth_bp = Blueprint('auth', __name__)
-patient_bp = Blueprint('patient', __name__)
-doctor_bp = Blueprint('doctor', __name__)
-admin_bp = Blueprint('admin', __name__)
+patient_bp = Blueprint('patient', __name__, url_prefix='/patient')
+doctor_bp = Blueprint('doctor', __name__, url_prefix='/doctor')
+admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 medicine_bp = Blueprint('medicine', __name__)
 consultation_bp = Blueprint('consultation', __name__)
 prescription_bp = Blueprint('prescription', __name__)

@@ -10,7 +10,7 @@
             <span class="text-xs font-bold text-teal-700 uppercase tracking-wider block mb-1">E-Pharmacy</span>
             <h1 class="text-3xl font-bold tracking-tight text-slate-900">Verified Medications</h1>
             <p class="text-xs sm:text-sm text-slate-500 mt-1">
-                Real-time stock tracking and backend-calculated pricing from Neon PostgreSQL.
+                Real-time stock tracking, clinical prescription verification, and backend-calculated pricing.
             </p>
         </div>
 
@@ -49,14 +49,29 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     {% for med in medicines %}
-                        <div class="clean-card rounded-xl p-4 flex flex-col justify-between hover:shadow-sm transition">
+                        {% set is_rx = med.requires_prescription %}
+                        {% set approval = user_valid_approvals.get(med.id) if user_valid_approvals else None %}
+                        
+                        <div class="clean-card rounded-xl p-4 flex flex-col justify-between hover:shadow-sm transition {% if is_rx and not approval %}border-amber-200/70 bg-amber-50/20{% endif %}">
                             <div>
                                 <div class="flex items-center justify-between mb-2">
                                     <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
                                         {{ med.category.name if med.category else 'General' }}
                                     </span>
-                                    {% if med.requires_prescription %}
-                                        <span class="text-[9px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/60">Rx</span>
+                                    {% if is_rx %}
+                                        {% if approval %}
+                                            <span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                                                <i class="fa-solid fa-check text-[8px]"></i> Rx Approved ({{ approval.remaining_qty }} left)
+                                            </span>
+                                        {% else %}
+                                            <span class="text-[9px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200 flex items-center gap-1">
+                                                <i class="fa-solid fa-lock text-[8px]"></i> Doctor Approval Required
+                                            </span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-[9px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                                            OTC / No Rx
+                                        </span>
                                     {% endif %}
                                 </div>
                                 <h3 class="text-sm font-bold text-slate-900">{{ med.name }}</h3>
@@ -65,9 +80,16 @@
 
                             <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
                                 <span class="text-sm font-bold text-slate-900 font-mono">₹{{ med.price|int }}</span>
-                                <button type="button" onclick="selectMedicine('{{ med.name }}')" class="px-2.5 py-1 rounded-lg bg-teal-50 hover:bg-teal-600 text-teal-700 hover:text-white font-semibold text-[11px] transition">
-                                    + Add to order
-                                </button>
+                                
+                                {% if not is_rx or approval %}
+                                    <button type="button" onclick="selectMedicine('{{ med.name }}')" class="px-2.5 py-1 rounded-lg bg-teal-50 hover:bg-teal-600 text-teal-700 hover:text-white font-semibold text-[11px] transition">
+                                        + Add to order
+                                    </button>
+                                {% else %}
+                                    <button type="button" onclick="openApprovalModal('{{ med.id }}', '{{ med.name }}')" class="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-semibold text-[11px] transition shadow-xs">
+                                        <i class="fa-solid fa-file-medical mr-1"></i> Request Review
+                                    </button>
+                                {% endif %}
                             </div>
                         </div>
                     {% endfor %}
@@ -77,9 +99,10 @@
             <!-- Order Form -->
             <div class="lg:col-span-5">
                 <div class="clean-card rounded-2xl p-6 sticky top-20">
-                    <h2 class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <h2 class="text-sm font-bold text-slate-900 mb-1 flex items-center gap-2">
                         <i class="fa-solid fa-cart-shopping text-teal-600 text-xs"></i> Order Checkout
                     </h2>
+                    <p class="text-[11px] text-slate-400 mb-4">Prescription requirements are enforced during checkout.</p>
 
                     <form action="{{ url_for('medicine.submit_order') }}" method="POST" class="space-y-3.5 text-xs">
                         <div>
@@ -127,6 +150,68 @@
 
     </div>
 </section>
+
+<!-- Modal: Request Prescription Approval from Doctor -->
+<div id="approval-modal" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-6 sm:p-7 max-w-lg w-full shadow-2xl border border-slate-200 text-xs">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+            <div>
+                <h3 class="text-sm font-bold text-slate-900" id="approval-modal-title">Doctor Prescription Review</h3>
+                <p class="text-[11px] text-slate-400">Prescription approval is legally required before purchasing this medication.</p>
+            </div>
+            <button type="button" onclick="closeApprovalModal()" class="text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <form action="{{ url_for('medicine.request_approval') }}" method="POST" class="space-y-3.5">
+            <input type="hidden" name="medicine_id" id="modal-medicine-id">
+
+            <div>
+                <label class="block font-semibold text-slate-700 mb-1">Requested Quantity Units</label>
+                <input type="number" name="quantity" min="1" max="100" value="1" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl">
+            </div>
+
+            <div>
+                <label class="block font-semibold text-slate-700 mb-1">Select Reviewing Doctor</label>
+                <select name="doctor_id" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl">
+                    {% for doc in doctors %}
+                        <option value="{{ doc.id }}">{{ doc.name }} ({{ doc.specialty }})</option>
+                    {% else %}
+                        <option value="">Any Available Doctor in Network</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block font-semibold text-slate-700 mb-1">Attach Existing Uploaded Prescription Slip (Optional)</label>
+                <select name="prescription_id" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl">
+                    <option value="">No Slip Attached (Doctor Review by Symptoms)</option>
+                    {% for rx in user_prescriptions %}
+                        <option value="{{ rx.id }}">Slip #{{ rx.id }}: {{ rx.filename }} ({{ rx.status }})</option>
+                    {% endfor %}
+                </select>
+                <a href="{{ url_for('prescription.upload_page') }}" target="_blank" class="text-[10px] text-teal-700 hover:underline mt-1 inline-block">
+                    + Upload a new prescription slip via OCR scanner
+                </a>
+            </div>
+
+            <div>
+                <label class="block font-semibold text-slate-700 mb-1">Clinical Reason / Symptoms for Doctor</label>
+                <textarea name="clinical_notes" rows="2" placeholder="e.g. Prescribed for seasonal respiratory infection / chronic follow-up" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl"></textarea>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button type="button" onclick="closeApprovalModal()" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-semibold">
+                    Cancel
+                </button>
+                <button type="submit" class="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold transition shadow-xs">
+                    Submit Request to Doctor
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -161,6 +246,16 @@ function addMedicationRow(defaultName = '') {
         </button>
     `;
     container.appendChild(div);
+}
+
+function openApprovalModal(medId, medName) {
+    document.getElementById('modal-medicine-id').value = medId;
+    document.getElementById('approval-modal-title').innerText = `Prescription Review: ${medName}`;
+    document.getElementById('approval-modal').classList.remove('hidden');
+}
+
+function closeApprovalModal() {
+    document.getElementById('approval-modal').classList.add('hidden');
 }
 </script>
 {% endblock %}

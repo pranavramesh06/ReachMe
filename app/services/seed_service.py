@@ -263,4 +263,70 @@ def migrate_and_seed_data(base_dir=None):
         except Exception as e:
             print(f"[Seed Service Error] Failed to migrate orders: {e}")
 
+    # 6. Seed Simulated Ambulance Fleet (Chennai Demo Region)
+    from app.models.ambulance import Ambulance
+    if Ambulance.query.count() == 0:
+        simulated_fleet = [
+            {
+                'vehicle_identifier': 'AMB-CHN-01',
+                'driver_name': 'K. Rajesh (Unit #101)',
+                'contact_phone': '+91 98401 22331',
+                'latitude': 13.0827,
+                'longitude': 80.2707,
+                'base_location_name': 'Chennai Central (Park Town)',
+                'simulated_speed_kmh': 42.0
+            },
+            {
+                'vehicle_identifier': 'AMB-CHN-02',
+                'driver_name': 'S. Murugan (Unit #102)',
+                'contact_phone': '+91 98402 33442',
+                'latitude': 13.0850,
+                'longitude': 80.2101,
+                'base_location_name': 'Anna Nagar West Depot',
+                'simulated_speed_kmh': 38.0
+            },
+            {
+                'vehicle_identifier': 'AMB-CHN-03',
+                'driver_name': 'V. Anand (Unit #103)',
+                'contact_phone': '+91 98403 44553',
+                'latitude': 13.0012,
+                'longitude': 80.2565,
+                'base_location_name': 'Adyar Bridge Response Hub',
+                'simulated_speed_kmh': 45.0
+            },
+            {
+                'vehicle_identifier': 'AMB-CHN-04',
+                'driver_name': 'M. Karthik (Unit #104)',
+                'contact_phone': '+91 98404 55664',
+                'latitude': 12.9249,
+                'longitude': 80.1000,
+                'base_location_name': 'Tambaram Sanatorium Emergency Base',
+                'simulated_speed_kmh': 40.0
+            },
+            {
+                'vehicle_identifier': 'AMB-CHN-05',
+                'driver_name': 'D. Suresh (Unit #105)',
+                'contact_phone': '+91 98405 66775',
+                'latitude': 13.0418,
+                'longitude': 80.2341,
+                'base_location_name': 'T. Nagar Panagal Park Unit',
+                'simulated_speed_kmh': 35.0
+            }
+        ]
+        for a_data in simulated_fleet:
+            amb = Ambulance(
+                vehicle_identifier=a_data['vehicle_identifier'],
+                driver_name=a_data['driver_name'],
+                contact_phone=a_data['contact_phone'],
+                latitude=a_data['latitude'],
+                longitude=a_data['longitude'],
+                base_location_name=a_data['base_location_name'],
+                simulated_speed_kmh=a_data['simulated_speed_kmh'],
+                status='AVAILABLE',
+                is_active=True
+            )
+            db.session.add(amb)
+        db.session.commit()
+        print("[Seed Service] Seeded 5 simulated ambulances for Chennai demo region.")
+
     print("[Seed Service] Data migration complete!")
