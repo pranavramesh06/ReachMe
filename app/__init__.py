@@ -56,6 +56,7 @@ def create_app(config_class=Config):
     @app.errorhandler(500)
     def internal_error(error):
         db.session.rollback()
+        app.logger.error(f"Internal Server Error (500): {error}", exc_info=True)
         return render_template('errors/500.html'), 500
 
     # Auto-initialize DB tables & seed Excel data if first run (non-testing and non-serverless)

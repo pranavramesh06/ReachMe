@@ -51,6 +51,8 @@ class AmbulanceAllocationTestCase(unittest.TestCase):
             )
             db.session.add_all([self.amb1, self.amb2, self.amb_busy])
             db.session.commit()
+            self.amb1_id = self.amb1.id
+            self.amb2_id = self.amb2.id
 
     def tearDown(self):
         with self.app.app_context():
@@ -141,6 +143,43 @@ class AmbulanceAllocationTestCase(unittest.TestCase):
 
         res = self.client.get(f'/ambulance/status/{req_id}')
         self.assertEqual(res.status_code, 403)
+
+    def test_emergency_request_schema_and_allocation_regression(self):
+        """Regression test verifying emergency_requests query with ambulance_id FK and allocation."""
+        with self.app.app_context():
+            # Create an emergency request linked to ambulance
+            req = EmergencyRequest(
+                patient_name='Regression Tester',
+                patient_phone='+91 99999 00000',
+                emergency_type='Acute Chest Pain',
+                location_address='Chennai Central',
+                latitude=13.0827,
+                longitude=80.2707,
+                ambulance_id=self.amb1_id,
+                assigned_vehicle="AMB-CHN-01 (Driver One)",
+                distance_km=0.0,
+                eta_minutes=2,
+                priority='CRITICAL',
+                status='ASSIGNED',
+                is_simulation=True
+            )
+            db.session.add(req)
+            db.session.commit()
+
+            # Query all emergency requests using SQLAlchemy ORM (must not fail with UndefinedColumn)
+            all_reqs = EmergencyRequest.query.all()
+            self.assertGreaterEqual(len(all_reqs), 1)
+            fetched = EmergencyRequest.query.filter_by(patient_name='Regression Tester').first()
+            self.assertIsNotNone(fetched)
+            self.assertEqual(fetched.ambulance_id, self.amb1_id)
+            self.assertEqual(fetched.distance_km, 0.0)
+            self.assertEqual(fetched.status, 'ASSIGNED')
+            
+            # Verify relationship & dictionary serialization
+            d = fetched.to_dict()
+            self.assertEqual(d['ambulance_id'], self.amb1_id)
+            self.assertIsNotNone(d['ambulance_lat'])
+            self.assertIsNotNone(d['ambulance_lng'])
 
 if __name__ == '__main__':
     unittest.main()
